@@ -1,0 +1,3356 @@
+{
+  "_comment": "Seed dataset modelling Факултет \"Полиция\" at Академия на МВР (Sofia), all four years. Researched fact: the faculty's five катедри, the two cadet specialties it teaches (ППООР and Гранична полиция), and the academic ranks. Modelled, not cited: group sizes (standard Bulgarian учебна група of ~25 -- the Academy does not publish enrolment), the distribution of subjects across the four years, and the instructor names, which are generic Bulgarian surnames rather than real staff. Lectures are delivered to the whole поток (a multi-group subject needing a large аудитория); семинарни занятия run per group.",
+  "slotConfig": {
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "periods": 6,
+    "periodTimes": [
+      "08:00-09:30",
+      "09:45-11:15",
+      "11:30-13:00",
+      "13:45-15:15",
+      "15:30-17:00",
+      "17:15-18:45"
+    ],
+    "blockedSlots": []
+  },
+  "teachers": [
+    {
+      "id": "t1",
+      "name": "проф. д-р Стоянов",
+      "department": "катедра \"Публичноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t2",
+      "name": "доц. д-р Ковачева",
+      "department": "катедра \"Публичноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t3",
+      "name": "гл. ас. д-р Тодоров",
+      "department": "катедра \"Публичноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t4",
+      "name": "ас. Маринов",
+      "department": "катедра \"Публичноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t5",
+      "name": "проф. д-р Влахов",
+      "department": "катедра \"Наказателноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t6",
+      "name": "доц. д-р Ангелова",
+      "department": "катедра \"Наказателноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t7",
+      "name": "доц. д-р Първанов",
+      "department": "катедра \"Наказателноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t8",
+      "name": "гл. ас. д-р Илиев",
+      "department": "катедра \"Наказателноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t9",
+      "name": "гл. ас. д-р Русева",
+      "department": "катедра \"Наказателноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t10",
+      "name": "ас. Данаилов",
+      "department": "катедра \"Наказателноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t11",
+      "name": "проф. д-р Митев",
+      "department": "катедра \"Опазване на обществения ред и граничен контрол\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t12",
+      "name": "доц. д-р Събева",
+      "department": "катедра \"Опазване на обществения ред и граничен контрол\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t13",
+      "name": "гл. ас. д-р Кирилов",
+      "department": "катедра \"Опазване на обществения ред и граничен контрол\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t14",
+      "name": "гл. ас. д-р Хаджиев",
+      "department": "катедра \"Опазване на обществения ред и граничен контрол\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t15",
+      "name": "ст. преп. Балабанов",
+      "department": "катедра \"Опазване на обществения ред и граничен контрол\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t16",
+      "name": "ас. Германова",
+      "department": "катедра \"Опазване на обществения ред и граничен контрол\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t17",
+      "name": "проф. д-р Драганов",
+      "department": "катедра \"Оперативно-издирвателна дейност\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t18",
+      "name": "доц. д-р Керемидчиев",
+      "department": "катедра \"Оперативно-издирвателна дейност\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t19",
+      "name": "доц. д-р Николова",
+      "department": "катедра \"Оперативно-издирвателна дейност\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t20",
+      "name": "гл. ас. д-р Апостолов",
+      "department": "катедра \"Оперативно-издирвателна дейност\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t21",
+      "name": "гл. ас. д-р Вълчев",
+      "department": "катедра \"Оперативно-издирвателна дейност\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t22",
+      "name": "ас. Захариева",
+      "department": "катедра \"Оперативно-издирвателна дейност\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "mon-3",
+        "mon-4",
+        "tue-1",
+        "tue-2",
+        "tue-3",
+        "tue-4",
+        "wed-1",
+        "wed-2",
+        "wed-3",
+        "wed-4",
+        "thu-1",
+        "thu-2",
+        "thu-3",
+        "thu-4",
+        "fri-1",
+        "fri-2",
+        "fri-3",
+        "fri-4"
+      ]
+    },
+    {
+      "id": "t23",
+      "name": "доц. д-р Шопов",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t24",
+      "name": "гл. ас. д-р Гьошев",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t25",
+      "name": "ст. преп. Бонев",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t26",
+      "name": "ст. преп. Тошева",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t27",
+      "name": "ст. преп. Джамбазов",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t28",
+      "name": "ас. Райков",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t29",
+      "name": "ст. преп. Оруш",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t30",
+      "name": "ст. преп. Личев",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "r1",
+      "name": "Аудитория 1",
+      "type": "lecture",
+      "capacity": 150,
+      "building": "Учебен корпус, ет. 1"
+    },
+    {
+      "id": "r2",
+      "name": "Аудитория 2",
+      "type": "lecture",
+      "capacity": 120,
+      "building": "Учебен корпус, ет. 1"
+    },
+    {
+      "id": "r3",
+      "name": "Аудитория 3",
+      "type": "lecture",
+      "capacity": 100,
+      "building": "Учебен корпус, ет. 1"
+    },
+    {
+      "id": "r4",
+      "name": "Аудитория 4",
+      "type": "lecture",
+      "capacity": 80,
+      "building": "Учебен корпус, ет. 1"
+    },
+    {
+      "id": "r5",
+      "name": "Учебна зала 201",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r6",
+      "name": "Учебна зала 202",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r7",
+      "name": "Учебна зала 203",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r8",
+      "name": "Учебна зала 204",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r9",
+      "name": "Учебна зала 205",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r10",
+      "name": "Учебна зала 206",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r11",
+      "name": "Учебна зала 207",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r12",
+      "name": "Учебна зала 208",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r13",
+      "name": "Компютърна зала 1",
+      "type": "lab",
+      "capacity": 25,
+      "building": "Учебен корпус, ет. 3"
+    },
+    {
+      "id": "r14",
+      "name": "Компютърна зала 2",
+      "type": "lab",
+      "capacity": 25,
+      "building": "Учебен корпус, ет. 3"
+    },
+    {
+      "id": "r15",
+      "name": "Компютърна зала 3",
+      "type": "lab",
+      "capacity": 25,
+      "building": "Учебен корпус, ет. 3"
+    },
+    {
+      "id": "r16",
+      "name": "Криминалистична лаборатория",
+      "type": "lab",
+      "capacity": 25,
+      "building": "Учебен корпус, ет. 3"
+    },
+    {
+      "id": "r17",
+      "name": "Физкултурен салон",
+      "type": "sports",
+      "capacity": 60,
+      "building": "Спортен комплекс"
+    },
+    {
+      "id": "r18",
+      "name": "Зала бойни спортове",
+      "type": "sports",
+      "capacity": 60,
+      "building": "Спортен комплекс"
+    },
+    {
+      "id": "r19",
+      "name": "Стрелбище – закрито",
+      "type": "firing_range",
+      "capacity": 30,
+      "building": "Стрелкови комплекс"
+    },
+    {
+      "id": "r20",
+      "name": "Стрелбище – открито",
+      "type": "firing_range",
+      "capacity": 30,
+      "building": "Стрелкови комплекс"
+    },
+    {
+      "id": "r21",
+      "name": "Полигон за специална тактика",
+      "type": "training_ground",
+      "capacity": 40,
+      "building": "Учебен полигон"
+    },
+    {
+      "id": "r22",
+      "name": "Тренировъчен град",
+      "type": "training_ground",
+      "capacity": 40,
+      "building": "Учебен полигон"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g1",
+      "name": "1 курс ППООР – гр. 1",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс"
+    },
+    {
+      "id": "g2",
+      "name": "1 курс ППООР – гр. 2",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс"
+    },
+    {
+      "id": "g3",
+      "name": "1 курс ППООР – гр. 3",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс"
+    },
+    {
+      "id": "g4",
+      "name": "1 курс ГП – гр. 1",
+      "size": 25,
+      "programme": "Гранична полиция, 1 курс"
+    },
+    {
+      "id": "g5",
+      "name": "1 курс ГП – гр. 2",
+      "size": 25,
+      "programme": "Гранична полиция, 1 курс"
+    },
+    {
+      "id": "g6",
+      "name": "2 курс ППООР – гр. 1",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 2 курс"
+    },
+    {
+      "id": "g7",
+      "name": "2 курс ППООР – гр. 2",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 2 курс"
+    },
+    {
+      "id": "g8",
+      "name": "2 курс ППООР – гр. 3",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 2 курс"
+    },
+    {
+      "id": "g9",
+      "name": "2 курс ГП – гр. 1",
+      "size": 25,
+      "programme": "Гранична полиция, 2 курс"
+    },
+    {
+      "id": "g10",
+      "name": "2 курс ГП – гр. 2",
+      "size": 25,
+      "programme": "Гранична полиция, 2 курс"
+    },
+    {
+      "id": "g11",
+      "name": "3 курс ППООР – гр. 1",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 3 курс"
+    },
+    {
+      "id": "g12",
+      "name": "3 курс ППООР – гр. 2",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 3 курс"
+    },
+    {
+      "id": "g13",
+      "name": "3 курс ППООР – гр. 3",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 3 курс"
+    },
+    {
+      "id": "g14",
+      "name": "3 курс ГП – гр. 1",
+      "size": 25,
+      "programme": "Гранична полиция, 3 курс"
+    },
+    {
+      "id": "g15",
+      "name": "3 курс ГП – гр. 2",
+      "size": 25,
+      "programme": "Гранична полиция, 3 курс"
+    },
+    {
+      "id": "g16",
+      "name": "4 курс ППООР – гр. 1",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 4 курс"
+    },
+    {
+      "id": "g17",
+      "name": "4 курс ППООР – гр. 2",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 4 курс"
+    },
+    {
+      "id": "g18",
+      "name": "4 курс ППООР – гр. 3",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 4 курс"
+    },
+    {
+      "id": "g19",
+      "name": "4 курс ГП – гр. 1",
+      "size": 25,
+      "programme": "Гранична полиция, 4 курс"
+    },
+    {
+      "id": "g20",
+      "name": "4 курс ГП – гр. 2",
+      "size": 25,
+      "programme": "Гранична полиция, 4 курс"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "s1",
+      "name": "Обща теория на правото – лекции (1 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g1",
+        "g2",
+        "g3"
+      ]
+    },
+    {
+      "id": "s2",
+      "name": "Обща теория на правото – упр. (1 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s3",
+      "name": "Обща теория на правото – упр. (1 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s4",
+      "name": "Обща теория на правото – упр. (1 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s5",
+      "name": "Конституционно право – лекции (1 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g1",
+        "g2",
+        "g3"
+      ]
+    },
+    {
+      "id": "s6",
+      "name": "Конституционно право – упр. (1 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s7",
+      "name": "Конституционно право – упр. (1 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s8",
+      "name": "Конституционно право – упр. (1 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s9",
+      "name": "Наказателно право (обща част) – лекции (1 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g1",
+        "g2",
+        "g3"
+      ]
+    },
+    {
+      "id": "s10",
+      "name": "Наказателно право (обща част) – упр. (1 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s11",
+      "name": "Наказателно право (обща част) – упр. (1 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s12",
+      "name": "Наказателно право (обща част) – упр. (1 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t9"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s13",
+      "name": "Полицейска психология – лекции (1 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t11",
+        "t12"
+      ],
+      "groupIds": [
+        "g1",
+        "g2",
+        "g3"
+      ]
+    },
+    {
+      "id": "s14",
+      "name": "Полицейска психология – упр. (1 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t13"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s15",
+      "name": "Полицейска психология – упр. (1 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t14"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s16",
+      "name": "Полицейска психология – упр. (1 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t15"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s17",
+      "name": "Информационни технологии – лекции (1 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t17",
+        "t18"
+      ],
+      "groupIds": [
+        "g1",
+        "g2",
+        "g3"
+      ]
+    },
+    {
+      "id": "s18",
+      "name": "Информационни технологии – упр. (1 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t19"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s19",
+      "name": "Информационни технологии – упр. (1 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t20"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s20",
+      "name": "Информационни технологии – упр. (1 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t21"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s21",
+      "name": "Физическа подготовка – упр. (1 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "sports",
+        "training_ground"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s22",
+      "name": "Физическа подготовка – упр. (1 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "sports",
+        "training_ground"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s23",
+      "name": "Физическа подготовка – упр. (1 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "sports",
+        "training_ground"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t27"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s24",
+      "name": "Обща теория на правото – лекции (1 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g4",
+        "g5"
+      ]
+    },
+    {
+      "id": "s25",
+      "name": "Обща теория на правото – упр. (1 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g4"
+      ]
+    },
+    {
+      "id": "s26",
+      "name": "Обща теория на правото – упр. (1 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g5"
+      ]
+    },
+    {
+      "id": "s27",
+      "name": "Конституционно право – лекции (1 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g4",
+        "g5"
+      ]
+    },
+    {
+      "id": "s28",
+      "name": "Конституционно право – упр. (1 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g4"
+      ]
+    },
+    {
+      "id": "s29",
+      "name": "Конституционно право – упр. (1 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g5"
+      ]
+    },
+    {
+      "id": "s30",
+      "name": "Наказателно право (обща част) – лекции (1 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g4",
+        "g5"
+      ]
+    },
+    {
+      "id": "s31",
+      "name": "Наказателно право (обща част) – упр. (1 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g4"
+      ]
+    },
+    {
+      "id": "s32",
+      "name": "Наказателно право (обща част) – упр. (1 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g5"
+      ]
+    },
+    {
+      "id": "s33",
+      "name": "Полицейска психология – лекции (1 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t11",
+        "t12"
+      ],
+      "groupIds": [
+        "g4",
+        "g5"
+      ]
+    },
+    {
+      "id": "s34",
+      "name": "Полицейска психология – упр. (1 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t13"
+      ],
+      "groupIds": [
+        "g4"
+      ]
+    },
+    {
+      "id": "s35",
+      "name": "Полицейска психология – упр. (1 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t14"
+      ],
+      "groupIds": [
+        "g5"
+      ]
+    },
+    {
+      "id": "s36",
+      "name": "Информационни технологии – лекции (1 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t17",
+        "t18"
+      ],
+      "groupIds": [
+        "g4",
+        "g5"
+      ]
+    },
+    {
+      "id": "s37",
+      "name": "Информационни технологии – упр. (1 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t19"
+      ],
+      "groupIds": [
+        "g4"
+      ]
+    },
+    {
+      "id": "s38",
+      "name": "Информационни технологии – упр. (1 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t20"
+      ],
+      "groupIds": [
+        "g5"
+      ]
+    },
+    {
+      "id": "s39",
+      "name": "Физическа подготовка – упр. (1 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "sports",
+        "training_ground"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g4"
+      ]
+    },
+    {
+      "id": "s40",
+      "name": "Физическа подготовка – упр. (1 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "sports",
+        "training_ground"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g5"
+      ]
+    },
+    {
+      "id": "s41",
+      "name": "Административно право и процес – лекции (2 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g6",
+        "g7",
+        "g8"
+      ]
+    },
+    {
+      "id": "s42",
+      "name": "Административно право и процес – упр. (2 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g6"
+      ]
+    },
+    {
+      "id": "s43",
+      "name": "Административно право и процес – упр. (2 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g7"
+      ]
+    },
+    {
+      "id": "s44",
+      "name": "Административно право и процес – упр. (2 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1"
+      ],
+      "groupIds": [
+        "g8"
+      ]
+    },
+    {
+      "id": "s45",
+      "name": "Наказателно право (особена част) – лекции (2 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g6",
+        "g7",
+        "g8"
+      ]
+    },
+    {
+      "id": "s46",
+      "name": "Наказателно право (особена част) – упр. (2 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g6"
+      ]
+    },
+    {
+      "id": "s47",
+      "name": "Наказателно право (особена част) – упр. (2 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g7"
+      ]
+    },
+    {
+      "id": "s48",
+      "name": "Наказателно право (особена част) – упр. (2 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t9"
+      ],
+      "groupIds": [
+        "g8"
+      ]
+    },
+    {
+      "id": "s49",
+      "name": "Наказателен процес – лекции (2 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g6",
+        "g7",
+        "g8"
+      ]
+    },
+    {
+      "id": "s50",
+      "name": "Наказателен процес – упр. (2 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g6"
+      ]
+    },
+    {
+      "id": "s51",
+      "name": "Наказателен процес – упр. (2 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g7"
+      ]
+    },
+    {
+      "id": "s52",
+      "name": "Наказателен процес – упр. (2 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t9"
+      ],
+      "groupIds": [
+        "g8"
+      ]
+    },
+    {
+      "id": "s53",
+      "name": "Криминалистика – лекции (2 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g6",
+        "g7",
+        "g8"
+      ]
+    },
+    {
+      "id": "s54",
+      "name": "Криминалистика – упр. (2 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g6"
+      ]
+    },
+    {
+      "id": "s55",
+      "name": "Криминалистика – упр. (2 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g7"
+      ]
+    },
+    {
+      "id": "s56",
+      "name": "Криминалистика – упр. (2 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t9"
+      ],
+      "groupIds": [
+        "g8"
+      ]
+    },
+    {
+      "id": "s57",
+      "name": "Оперативно-издирвателна дейност – лекции (2 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t17",
+        "t18"
+      ],
+      "groupIds": [
+        "g6",
+        "g7",
+        "g8"
+      ]
+    },
+    {
+      "id": "s58",
+      "name": "Оперативно-издирвателна дейност – упр. (2 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t19"
+      ],
+      "groupIds": [
+        "g6"
+      ]
+    },
+    {
+      "id": "s59",
+      "name": "Оперативно-издирвателна дейност – упр. (2 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t20"
+      ],
+      "groupIds": [
+        "g7"
+      ]
+    },
+    {
+      "id": "s60",
+      "name": "Оперативно-издирвателна дейност – упр. (2 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t21"
+      ],
+      "groupIds": [
+        "g8"
+      ]
+    },
+    {
+      "id": "s61",
+      "name": "Огнева подготовка – упр. (2 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g6"
+      ]
+    },
+    {
+      "id": "s62",
+      "name": "Огнева подготовка – упр. (2 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g7"
+      ]
+    },
+    {
+      "id": "s63",
+      "name": "Огнева подготовка – упр. (2 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t27"
+      ],
+      "groupIds": [
+        "g8"
+      ]
+    },
+    {
+      "id": "s64",
+      "name": "Специална полицейска тактика – упр. (2 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g6"
+      ]
+    },
+    {
+      "id": "s65",
+      "name": "Специална полицейска тактика – упр. (2 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g7"
+      ]
+    },
+    {
+      "id": "s66",
+      "name": "Специална полицейска тактика – упр. (2 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t27"
+      ],
+      "groupIds": [
+        "g8"
+      ]
+    },
+    {
+      "id": "s67",
+      "name": "Административно право и процес – лекции (2 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g9",
+        "g10"
+      ]
+    },
+    {
+      "id": "s68",
+      "name": "Административно право и процес – упр. (2 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g9"
+      ]
+    },
+    {
+      "id": "s69",
+      "name": "Административно право и процес – упр. (2 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g10"
+      ]
+    },
+    {
+      "id": "s70",
+      "name": "Наказателно право (особена част) – лекции (2 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g9",
+        "g10"
+      ]
+    },
+    {
+      "id": "s71",
+      "name": "Наказателно право (особена част) – упр. (2 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g9"
+      ]
+    },
+    {
+      "id": "s72",
+      "name": "Наказателно право (особена част) – упр. (2 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g10"
+      ]
+    },
+    {
+      "id": "s73",
+      "name": "Наказателен процес – лекции (2 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g9",
+        "g10"
+      ]
+    },
+    {
+      "id": "s74",
+      "name": "Наказателен процес – упр. (2 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g9"
+      ]
+    },
+    {
+      "id": "s75",
+      "name": "Наказателен процес – упр. (2 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g10"
+      ]
+    },
+    {
+      "id": "s76",
+      "name": "Криминалистика – лекции (2 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g9",
+        "g10"
+      ]
+    },
+    {
+      "id": "s77",
+      "name": "Криминалистика – упр. (2 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g9"
+      ]
+    },
+    {
+      "id": "s78",
+      "name": "Криминалистика – упр. (2 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g10"
+      ]
+    },
+    {
+      "id": "s79",
+      "name": "Оперативно-издирвателна дейност – лекции (2 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t17",
+        "t18"
+      ],
+      "groupIds": [
+        "g9",
+        "g10"
+      ]
+    },
+    {
+      "id": "s80",
+      "name": "Оперативно-издирвателна дейност – упр. (2 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t19"
+      ],
+      "groupIds": [
+        "g9"
+      ]
+    },
+    {
+      "id": "s81",
+      "name": "Оперативно-издирвателна дейност – упр. (2 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t20"
+      ],
+      "groupIds": [
+        "g10"
+      ]
+    },
+    {
+      "id": "s82",
+      "name": "Огнева подготовка – упр. (2 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g9"
+      ]
+    },
+    {
+      "id": "s83",
+      "name": "Огнева подготовка – упр. (2 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g10"
+      ]
+    },
+    {
+      "id": "s84",
+      "name": "Специална полицейска тактика – упр. (2 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g9"
+      ]
+    },
+    {
+      "id": "s85",
+      "name": "Специална полицейска тактика – упр. (2 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g10"
+      ]
+    },
+    {
+      "id": "s86",
+      "name": "Криминология – лекции (3 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g11",
+        "g12",
+        "g13"
+      ]
+    },
+    {
+      "id": "s87",
+      "name": "Криминология – упр. (3 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g11"
+      ]
+    },
+    {
+      "id": "s88",
+      "name": "Криминология – упр. (3 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g12"
+      ]
+    },
+    {
+      "id": "s89",
+      "name": "Криминология – упр. (3 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t9"
+      ],
+      "groupIds": [
+        "g13"
+      ]
+    },
+    {
+      "id": "s90",
+      "name": "Разследване на престъпления – лекции (3 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g11",
+        "g12",
+        "g13"
+      ]
+    },
+    {
+      "id": "s91",
+      "name": "Разследване на престъпления – упр. (3 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g11"
+      ]
+    },
+    {
+      "id": "s92",
+      "name": "Разследване на престъпления – упр. (3 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g12"
+      ]
+    },
+    {
+      "id": "s93",
+      "name": "Разследване на престъпления – упр. (3 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t9"
+      ],
+      "groupIds": [
+        "g13"
+      ]
+    },
+    {
+      "id": "s94",
+      "name": "Опазване на обществения ред – лекции (3 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t11",
+        "t12"
+      ],
+      "groupIds": [
+        "g11",
+        "g12",
+        "g13"
+      ]
+    },
+    {
+      "id": "s95",
+      "name": "Опазване на обществения ред – упр. (3 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t13"
+      ],
+      "groupIds": [
+        "g11"
+      ]
+    },
+    {
+      "id": "s96",
+      "name": "Опазване на обществения ред – упр. (3 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t14"
+      ],
+      "groupIds": [
+        "g12"
+      ]
+    },
+    {
+      "id": "s97",
+      "name": "Опазване на обществения ред – упр. (3 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t15"
+      ],
+      "groupIds": [
+        "g13"
+      ]
+    },
+    {
+      "id": "s98",
+      "name": "Гранично-полицейска дейност – лекции (3 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t11",
+        "t12"
+      ],
+      "groupIds": [
+        "g11",
+        "g12",
+        "g13"
+      ]
+    },
+    {
+      "id": "s99",
+      "name": "Гранично-полицейска дейност – упр. (3 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t13"
+      ],
+      "groupIds": [
+        "g11"
+      ]
+    },
+    {
+      "id": "s100",
+      "name": "Гранично-полицейска дейност – упр. (3 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t14"
+      ],
+      "groupIds": [
+        "g12"
+      ]
+    },
+    {
+      "id": "s101",
+      "name": "Гранично-полицейска дейност – упр. (3 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t15"
+      ],
+      "groupIds": [
+        "g13"
+      ]
+    },
+    {
+      "id": "s102",
+      "name": "Оперативно документиране – лекции (3 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t17",
+        "t18"
+      ],
+      "groupIds": [
+        "g11",
+        "g12",
+        "g13"
+      ]
+    },
+    {
+      "id": "s103",
+      "name": "Оперативно документиране – упр. (3 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t19"
+      ],
+      "groupIds": [
+        "g11"
+      ]
+    },
+    {
+      "id": "s104",
+      "name": "Оперативно документиране – упр. (3 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t20"
+      ],
+      "groupIds": [
+        "g12"
+      ]
+    },
+    {
+      "id": "s105",
+      "name": "Оперативно документиране – упр. (3 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t21"
+      ],
+      "groupIds": [
+        "g13"
+      ]
+    },
+    {
+      "id": "s106",
+      "name": "Огнева подготовка – упр. (3 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g11"
+      ]
+    },
+    {
+      "id": "s107",
+      "name": "Огнева подготовка – упр. (3 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g12"
+      ]
+    },
+    {
+      "id": "s108",
+      "name": "Огнева подготовка – упр. (3 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t27"
+      ],
+      "groupIds": [
+        "g13"
+      ]
+    },
+    {
+      "id": "s109",
+      "name": "Специализирана полицейска тактика – упр. (3 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "training_ground"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g11"
+      ]
+    },
+    {
+      "id": "s110",
+      "name": "Специализирана полицейска тактика – упр. (3 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "training_ground"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g12"
+      ]
+    },
+    {
+      "id": "s111",
+      "name": "Специализирана полицейска тактика – упр. (3 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "training_ground"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t27"
+      ],
+      "groupIds": [
+        "g13"
+      ]
+    },
+    {
+      "id": "s112",
+      "name": "Криминология – лекции (3 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g14",
+        "g15"
+      ]
+    },
+    {
+      "id": "s113",
+      "name": "Криминология – упр. (3 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g14"
+      ]
+    },
+    {
+      "id": "s114",
+      "name": "Криминология – упр. (3 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g15"
+      ]
+    },
+    {
+      "id": "s115",
+      "name": "Разследване на престъпления – лекции (3 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g14",
+        "g15"
+      ]
+    },
+    {
+      "id": "s116",
+      "name": "Разследване на престъпления – упр. (3 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t7"
+      ],
+      "groupIds": [
+        "g14"
+      ]
+    },
+    {
+      "id": "s117",
+      "name": "Разследване на престъпления – упр. (3 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t8"
+      ],
+      "groupIds": [
+        "g15"
+      ]
+    },
+    {
+      "id": "s118",
+      "name": "Опазване на обществения ред – лекции (3 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t11",
+        "t12"
+      ],
+      "groupIds": [
+        "g14",
+        "g15"
+      ]
+    },
+    {
+      "id": "s119",
+      "name": "Опазване на обществения ред – упр. (3 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t13"
+      ],
+      "groupIds": [
+        "g14"
+      ]
+    },
+    {
+      "id": "s120",
+      "name": "Опазване на обществения ред – упр. (3 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t14"
+      ],
+      "groupIds": [
+        "g15"
+      ]
+    },
+    {
+      "id": "s121",
+      "name": "Гранично-полицейска дейност – лекции (3 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t11",
+        "t12"
+      ],
+      "groupIds": [
+        "g14",
+        "g15"
+      ]
+    },
+    {
+      "id": "s122",
+      "name": "Гранично-полицейска дейност – упр. (3 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t13"
+      ],
+      "groupIds": [
+        "g14"
+      ]
+    },
+    {
+      "id": "s123",
+      "name": "Гранично-полицейска дейност – упр. (3 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t14"
+      ],
+      "groupIds": [
+        "g15"
+      ]
+    },
+    {
+      "id": "s124",
+      "name": "Оперативно документиране – лекции (3 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t17",
+        "t18"
+      ],
+      "groupIds": [
+        "g14",
+        "g15"
+      ]
+    },
+    {
+      "id": "s125",
+      "name": "Оперативно документиране – упр. (3 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t19"
+      ],
+      "groupIds": [
+        "g14"
+      ]
+    },
+    {
+      "id": "s126",
+      "name": "Оперативно документиране – упр. (3 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t20"
+      ],
+      "groupIds": [
+        "g15"
+      ]
+    },
+    {
+      "id": "s127",
+      "name": "Огнева подготовка – упр. (3 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g14"
+      ]
+    },
+    {
+      "id": "s128",
+      "name": "Огнева подготовка – упр. (3 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g15"
+      ]
+    },
+    {
+      "id": "s129",
+      "name": "Специализирана полицейска тактика – упр. (3 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "training_ground"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g14"
+      ]
+    },
+    {
+      "id": "s130",
+      "name": "Специализирана полицейска тактика – упр. (3 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "training_ground"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g15"
+      ]
+    },
+    {
+      "id": "s131",
+      "name": "Противодействие на тероризма – лекции (4 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t11",
+        "t12"
+      ],
+      "groupIds": [
+        "g16",
+        "g17",
+        "g18"
+      ]
+    },
+    {
+      "id": "s132",
+      "name": "Противодействие на тероризма – упр. (4 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t13"
+      ],
+      "groupIds": [
+        "g16"
+      ]
+    },
+    {
+      "id": "s133",
+      "name": "Противодействие на тероризма – упр. (4 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t14"
+      ],
+      "groupIds": [
+        "g17"
+      ]
+    },
+    {
+      "id": "s134",
+      "name": "Противодействие на тероризма – упр. (4 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t15"
+      ],
+      "groupIds": [
+        "g18"
+      ]
+    },
+    {
+      "id": "s135",
+      "name": "Противодействие на киберпрестъпността – лекции (4 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t17",
+        "t18"
+      ],
+      "groupIds": [
+        "g16",
+        "g17",
+        "g18"
+      ]
+    },
+    {
+      "id": "s136",
+      "name": "Противодействие на киберпрестъпността – упр. (4 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t19"
+      ],
+      "groupIds": [
+        "g16"
+      ]
+    },
+    {
+      "id": "s137",
+      "name": "Противодействие на киберпрестъпността – упр. (4 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t20"
+      ],
+      "groupIds": [
+        "g17"
+      ]
+    },
+    {
+      "id": "s138",
+      "name": "Противодействие на киберпрестъпността – упр. (4 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t21"
+      ],
+      "groupIds": [
+        "g18"
+      ]
+    },
+    {
+      "id": "s139",
+      "name": "Управление на полицейската дейност – лекции (4 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g16",
+        "g17",
+        "g18"
+      ]
+    },
+    {
+      "id": "s140",
+      "name": "Управление на полицейската дейност – упр. (4 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g16"
+      ]
+    },
+    {
+      "id": "s141",
+      "name": "Управление на полицейската дейност – упр. (4 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g17"
+      ]
+    },
+    {
+      "id": "s142",
+      "name": "Управление на полицейската дейност – упр. (4 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1"
+      ],
+      "groupIds": [
+        "g18"
+      ]
+    },
+    {
+      "id": "s143",
+      "name": "Международно полицейско сътрудничество – лекции (4 к. ППООР)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g16",
+        "g17",
+        "g18"
+      ]
+    },
+    {
+      "id": "s144",
+      "name": "Практическа подготовка – упр. (4 к. ППООР, гр. 1)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g16"
+      ]
+    },
+    {
+      "id": "s145",
+      "name": "Практическа подготовка – упр. (4 к. ППООР, гр. 2)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g17"
+      ]
+    },
+    {
+      "id": "s146",
+      "name": "Практическа подготовка – упр. (4 к. ППООР, гр. 3)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t27"
+      ],
+      "groupIds": [
+        "g18"
+      ]
+    },
+    {
+      "id": "s147",
+      "name": "Противодействие на тероризма – лекции (4 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t11",
+        "t12"
+      ],
+      "groupIds": [
+        "g19",
+        "g20"
+      ]
+    },
+    {
+      "id": "s148",
+      "name": "Противодействие на тероризма – упр. (4 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t13"
+      ],
+      "groupIds": [
+        "g19"
+      ]
+    },
+    {
+      "id": "s149",
+      "name": "Противодействие на тероризма – упр. (4 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t14"
+      ],
+      "groupIds": [
+        "g20"
+      ]
+    },
+    {
+      "id": "s150",
+      "name": "Противодействие на киберпрестъпността – лекции (4 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t17",
+        "t18"
+      ],
+      "groupIds": [
+        "g19",
+        "g20"
+      ]
+    },
+    {
+      "id": "s151",
+      "name": "Противодействие на киберпрестъпността – упр. (4 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t19"
+      ],
+      "groupIds": [
+        "g19"
+      ]
+    },
+    {
+      "id": "s152",
+      "name": "Противодействие на киберпрестъпността – упр. (4 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t20"
+      ],
+      "groupIds": [
+        "g20"
+      ]
+    },
+    {
+      "id": "s153",
+      "name": "Управление на полицейската дейност – лекции (4 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g19",
+        "g20"
+      ]
+    },
+    {
+      "id": "s154",
+      "name": "Управление на полицейската дейност – упр. (4 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g19"
+      ]
+    },
+    {
+      "id": "s155",
+      "name": "Управление на полицейската дейност – упр. (4 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g20"
+      ]
+    },
+    {
+      "id": "s156",
+      "name": "Международно полицейско сътрудничество – лекции (4 к. ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t1",
+        "t2"
+      ],
+      "groupIds": [
+        "g19",
+        "g20"
+      ]
+    },
+    {
+      "id": "s157",
+      "name": "Практическа подготовка – упр. (4 к. ГП, гр. 1)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t25"
+      ],
+      "groupIds": [
+        "g19"
+      ]
+    },
+    {
+      "id": "s158",
+      "name": "Практическа подготовка – упр. (4 к. ГП, гр. 2)",
+      "allowedRoomTypes": [
+        "training_ground",
+        "sports"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t26"
+      ],
+      "groupIds": [
+        "g20"
+      ]
+    }
+  ]
+}

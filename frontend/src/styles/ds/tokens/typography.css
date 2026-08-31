@@ -1,0 +1,20 @@
+:root{
+--font-display:"SF Pro Display","Inter",system-ui,-apple-system,sans-serif;
+--font-text:"SF Pro Text","Inter",system-ui,-apple-system,sans-serif;
+--text-hero-display-size:56px;--text-hero-display-weight:600;--text-hero-display-lh:1.07;--text-hero-display-ls:-0.28px;
+--text-display-lg-size:40px;--text-display-lg-weight:600;--text-display-lg-lh:1.10;--text-display-lg-ls:0px;
+--text-display-md-size:34px;--text-display-md-weight:600;--text-display-md-lh:1.47;--text-display-md-ls:-0.374px;
+--text-lead-size:28px;--text-lead-weight:400;--text-lead-lh:1.14;--text-lead-ls:0.196px;
+--text-lead-airy-size:24px;--text-lead-airy-weight:300;--text-lead-airy-lh:1.5;--text-lead-airy-ls:0px;
+--text-tagline-size:21px;--text-tagline-weight:600;--text-tagline-lh:1.19;--text-tagline-ls:0.231px;
+--text-body-strong-size:17px;--text-body-strong-weight:600;--text-body-strong-lh:1.24;--text-body-strong-ls:-0.374px;
+--text-body-size:17px;--text-body-weight:400;--text-body-lh:1.47;--text-body-ls:-0.374px;
+--text-dense-link-size:17px;--text-dense-link-weight:400;--text-dense-link-lh:2.41;--text-dense-link-ls:0px;
+--text-caption-size:14px;--text-caption-weight:400;--text-caption-lh:1.43;--text-caption-ls:-0.224px;
+--text-caption-strong-size:14px;--text-caption-strong-weight:600;--text-caption-strong-lh:1.29;--text-caption-strong-ls:-0.224px;
+--text-button-large-size:18px;--text-button-large-weight:300;--text-button-large-lh:1.0;--text-button-large-ls:0px;
+--text-button-utility-size:14px;--text-button-utility-weight:400;--text-button-utility-lh:1.29;--text-button-utility-ls:-0.224px;
+--text-fine-print-size:12px;--text-fine-print-weight:400;--text-fine-print-lh:1.0;--text-fine-print-ls:-0.12px;
+--text-micro-legal-size:10px;--text-micro-legal-weight:400;--text-micro-legal-lh:1.3;--text-micro-legal-ls:-0.08px;
+--text-nav-link-size:12px;--text-nav-link-weight:400;--text-nav-link-lh:1.0;--text-nav-link-ls:-0.12px;
+}

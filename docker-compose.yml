@@ -1,0 +1,28 @@
+# Two services, two ports:
+#   solver   http://localhost:8000  FastAPI + OR-Tools CP-SAT
+#   frontend http://localhost:5173  React + Vite dev server (proxies /api -> solver)
+services:
+  solver:
+    build:
+      context: .
+      dockerfile: solver/Dockerfile
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      # Vite proxies /api to this address from inside the compose network.
+      SOLVER_URL: http://solver:8000
+    depends_on:
+      solver:
+        condition: service_healthy

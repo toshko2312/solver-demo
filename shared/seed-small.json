@@ -1,0 +1,406 @@
+{
+  "_comment": "Small example: one курс of Факултет \"Полиция\", Академия на МВР. Same vocabulary and structure as seed-full.json (потоци lectures, per-group упражнения, instructor pools, all five room types) at a size that solves in seconds and stays readable in the weekly grid. It is tuned to make the two soft constraints trade against each other visibly. The instructors are split into an early camp (periods 1-2) and a late camp (period 6 only, so two late sessions can never sit adjacent), and every group is taught by both. At the default weights (preferenceWeight 10, gapWeight 1) honouring the preferences is cheaper than closing a hole -- a day running 1st, 2nd and 6th period costs 3 gap units but no preference miss -- so the timetable comes back with roughly 12 gap units across three split days and nothing flagged. Raise gapWeight to 10 in the Settings dialog and the arithmetic flips: the days compact to zero gaps and three teacher preferences get traded away instead. That before/after is the point of this dataset.",
+  "slotConfig": {
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "periods": 6,
+    "periodTimes": [
+      "08:00-09:30",
+      "09:45-11:15",
+      "11:30-13:00",
+      "13:45-15:15",
+      "15:30-17:00",
+      "17:15-18:45"
+    ],
+    "blockedSlots": []
+  },
+  "teachers": [
+    {
+      "id": "t1",
+      "name": "проф. д-р Стоянов",
+      "department": "катедра \"Публичноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t2",
+      "name": "доц. д-р Ковачева",
+      "department": "катедра \"Наказателноправни науки\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t3",
+      "name": "гл. ас. д-р Илиев",
+      "department": "катедра \"Наказателноправни науки\"",
+      "preferredSlots": [
+        "mon-6",
+        "tue-6",
+        "wed-6",
+        "thu-6",
+        "fri-6"
+      ]
+    },
+    {
+      "id": "t4",
+      "name": "доц. д-р Николова",
+      "department": "катедра \"Оперативно-издирвателна дейност\"",
+      "preferredSlots": [
+        "mon-6",
+        "tue-6",
+        "wed-6",
+        "thu-6",
+        "fri-6"
+      ]
+    },
+    {
+      "id": "t5",
+      "name": "ст. преп. Бонев",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    },
+    {
+      "id": "t6",
+      "name": "ст. преп. Тошева",
+      "department": "катедра \"Специална полицейска тактика\"",
+      "preferredSlots": [
+        "mon-1",
+        "mon-2",
+        "tue-1",
+        "tue-2",
+        "wed-1",
+        "wed-2",
+        "thu-1",
+        "thu-2",
+        "fri-1",
+        "fri-2"
+      ]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "r1",
+      "name": "Аудитория 1",
+      "type": "lecture",
+      "capacity": 150,
+      "building": "Учебен корпус, ет. 1"
+    },
+    {
+      "id": "r2",
+      "name": "Учебна зала 201",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r3",
+      "name": "Учебна зала 202",
+      "type": "lecture",
+      "capacity": 30,
+      "building": "Учебен корпус, ет. 2"
+    },
+    {
+      "id": "r4",
+      "name": "Компютърна зала 1",
+      "type": "lab",
+      "capacity": 25,
+      "building": "Учебен корпус, ет. 3"
+    },
+    {
+      "id": "r5",
+      "name": "Криминалистична лаборатория",
+      "type": "lab",
+      "capacity": 25,
+      "building": "Учебен корпус, ет. 3"
+    },
+    {
+      "id": "r6",
+      "name": "Физкултурен салон",
+      "type": "sports",
+      "capacity": 60,
+      "building": "Спортен комплекс"
+    },
+    {
+      "id": "r7",
+      "name": "Стрелбище",
+      "type": "firing_range",
+      "capacity": 30,
+      "building": "Стрелкови комплекс"
+    },
+    {
+      "id": "r8",
+      "name": "Полигон за специална тактика",
+      "type": "training_ground",
+      "capacity": 40,
+      "building": "Учебен полигон"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g1",
+      "name": "1 курс ППООР – гр. 1",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс"
+    },
+    {
+      "id": "g2",
+      "name": "1 курс ППООР – гр. 2",
+      "size": 25,
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс"
+    },
+    {
+      "id": "g3",
+      "name": "1 курс ГП – гр. 1",
+      "size": 25,
+      "programme": "Гранична полиция, 1 курс"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "s1",
+      "name": "Наказателно право – лекции",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t2",
+        "t3"
+      ],
+      "groupIds": [
+        "g1",
+        "g2",
+        "g3"
+      ]
+    },
+    {
+      "id": "s2",
+      "name": "Наказателно право – упр. (гр. 1)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s3",
+      "name": "Наказателно право – упр. (гр. 2)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s4",
+      "name": "Конституционно право – лекции",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t1"
+      ],
+      "groupIds": [
+        "g1",
+        "g2",
+        "g3"
+      ]
+    },
+    {
+      "id": "s5",
+      "name": "Криминалистика – упр. (гр. 1)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t2",
+        "t4"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s6",
+      "name": "Криминалистика – упр. (гр. 2)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s7",
+      "name": "Информационни технологии – упр. (ГП)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s8",
+      "name": "Физическа подготовка (гр. 1)",
+      "allowedRoomTypes": [
+        "sports",
+        "training_ground"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s9",
+      "name": "Физическа подготовка (гр. 2)",
+      "allowedRoomTypes": [
+        "sports",
+        "training_ground"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s10",
+      "name": "Физическа подготовка (ГП)",
+      "allowedRoomTypes": [
+        "sports",
+        "training_ground"
+      ],
+      "sessionsPerWeek": 2,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s11",
+      "name": "Огнева подготовка",
+      "allowedRoomTypes": [
+        "firing_range"
+      ],
+      "sessionsPerWeek": 3,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g1"
+      ]
+    },
+    {
+      "id": "s12",
+      "name": "Специална полицейска тактика",
+      "allowedRoomTypes": [
+        "training_ground"
+      ],
+      "sessionsPerWeek": 3,
+      "teacherIds": [
+        "t5",
+        "t6"
+      ],
+      "groupIds": [
+        "g2"
+      ]
+    },
+    {
+      "id": "s13",
+      "name": "Криминалистика – упр. (ГП)",
+      "allowedRoomTypes": [
+        "lab"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t4"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    },
+    {
+      "id": "s14",
+      "name": "Наказателно право – упр. (ГП)",
+      "allowedRoomTypes": [
+        "lecture"
+      ],
+      "sessionsPerWeek": 1,
+      "teacherIds": [
+        "t3"
+      ],
+      "groupIds": [
+        "g3"
+      ]
+    }
+  ]
+}
