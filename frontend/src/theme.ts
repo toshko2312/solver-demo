@@ -2,7 +2,7 @@
  *  Room types get fixed colours; subjects are user-created, so they cycle
  *  through the mock's subject palette in list order. */
 
-import type { RoomType } from './types';
+import type { Role, RoomType } from './types';
 
 export interface Swatch {
   c: string;
@@ -19,6 +19,34 @@ export const ROOM_TYPE_LABEL: Record<RoomType, string> = {
   firing_range: 'Firing range',
   training_ground: 'Training ground',
 };
+
+/** The ranks a blank project starts with. Must stay in step with DEFAULT_ROLES
+ *  in solver/app/models.py -- the ids especially, which are what a request
+ *  omitting `roles` falls back to on the solver side. */
+export const DEFAULT_ROLES: Role[] = [
+  { id: 'professor', name: 'проф. — Professor', short: 'проф.', weight: 6 },
+  { id: 'associate_professor', name: 'доц. — Assoc. Professor', short: 'доц.', weight: 5 },
+  { id: 'chief_assistant', name: 'гл. ас. — Chief Assistant', short: 'гл. ас.', weight: 4 },
+  { id: 'senior_lecturer', name: 'ст. преп. — Senior Lecturer', short: 'ст. преп.', weight: 3 },
+  { id: 'lecturer', name: 'преп. — Lecturer', short: 'преп.', weight: 2 },
+  { id: 'assistant', name: 'ас. — Assistant', short: 'ас.', weight: 1 },
+];
+
+/** Mirrors UNRANKED_WEIGHT: a teacher with no stated rank shares the bottom tier. */
+export const UNRANKED_WEIGHT = 1;
+
+/** Mirrors effective_weight() in solver/app/models.py. */
+export function effectiveWeight(
+  t: { role?: string | null; priorityWeight?: number | null },
+  roles: Role[],
+): number {
+  if (t.priorityWeight != null) return t.priorityWeight;
+  if (t.role != null) {
+    const role = roles.find((r) => r.id === t.role);
+    if (role) return role.weight;
+  }
+  return UNRANKED_WEIGHT;
+}
 
 export const ROOM_TYPE_COLOR: Record<RoomType, Swatch> = {
   lecture: { c: '#0066cc', tint: '#e9f1fb', ink: '#0a4f9e' },

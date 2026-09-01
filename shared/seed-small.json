@@ -19,6 +19,44 @@
     ],
     "blockedSlots": []
   },
+  "roles": [
+    {
+      "id": "professor",
+      "name": "проф. — Professor",
+      "short": "проф.",
+      "weight": 6
+    },
+    {
+      "id": "associate_professor",
+      "name": "доц. — Assoc. Professor",
+      "short": "доц.",
+      "weight": 5
+    },
+    {
+      "id": "chief_assistant",
+      "name": "гл. ас. — Chief Assistant",
+      "short": "гл. ас.",
+      "weight": 4
+    },
+    {
+      "id": "senior_lecturer",
+      "name": "ст. преп. — Senior Lecturer",
+      "short": "ст. преп.",
+      "weight": 3
+    },
+    {
+      "id": "lecturer",
+      "name": "преп. — Lecturer",
+      "short": "преп.",
+      "weight": 2
+    },
+    {
+      "id": "assistant",
+      "name": "ас. — Assistant",
+      "short": "ас.",
+      "weight": 1
+    }
+  ],
   "teachers": [
     {
       "id": "t1",
@@ -35,6 +73,12 @@
         "thu-2",
         "fri-1",
         "fri-2"
+      ],
+      "role": "professor",
+      "preferredRooms": [
+        "r1",
+        "r2",
+        "r3"
       ]
     },
     {
@@ -52,6 +96,12 @@
         "thu-2",
         "fri-1",
         "fri-2"
+      ],
+      "role": "associate_professor",
+      "preferredRooms": [
+        "r1",
+        "r3",
+        "r2"
       ]
     },
     {
@@ -64,6 +114,11 @@
         "wed-6",
         "thu-6",
         "fri-6"
+      ],
+      "role": "chief_assistant",
+      "preferredRooms": [
+        "r2",
+        "r1"
       ]
     },
     {
@@ -76,6 +131,11 @@
         "wed-6",
         "thu-6",
         "fri-6"
+      ],
+      "role": "associate_professor",
+      "preferredRooms": [
+        "r5",
+        "r4"
       ]
     },
     {
@@ -93,6 +153,11 @@
         "thu-2",
         "fri-1",
         "fri-2"
+      ],
+      "role": "senior_lecturer",
+      "preferredRooms": [
+        "r8",
+        "r6"
       ]
     },
     {
@@ -110,6 +175,11 @@
         "thu-2",
         "fri-1",
         "fri-2"
+      ],
+      "role": "senior_lecturer",
+      "preferredRooms": [
+        "r8",
+        "r6"
       ]
     }
   ],
@@ -176,19 +246,181 @@
       "id": "g1",
       "name": "1 курс ППООР – гр. 1",
       "size": 25,
-      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс"
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс",
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "start": "2025-09-15",
+          "end": "2026-01-30",
+          "breaks": [
+            {
+              "start": "2025-12-22",
+              "end": "2026-01-04",
+              "label": "Коледна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2025/2026",
+          "index": 2,
+          "start": "2026-02-09",
+          "end": "2026-06-12",
+          "breaks": [
+            {
+              "start": "2026-04-10",
+              "end": "2026-04-17",
+              "label": "Пролетна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2026/2027",
+          "index": 1,
+          "start": "2026-09-14",
+          "end": "2027-01-29",
+          "breaks": [
+            {
+              "start": "2026-12-21",
+              "end": "2027-01-03",
+              "label": "Коледна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2026/2027",
+          "index": 2,
+          "start": "2027-02-08",
+          "end": "2027-06-11",
+          "breaks": [
+            {
+              "start": "2027-04-02",
+              "end": "2027-04-09",
+              "label": "Пролетна ваканция"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "g2",
       "name": "1 курс ППООР – гр. 2",
       "size": 25,
-      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс"
+      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс",
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "start": "2025-09-15",
+          "end": "2026-01-30",
+          "breaks": [
+            {
+              "start": "2025-12-22",
+              "end": "2026-01-04",
+              "label": "Коледна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2025/2026",
+          "index": 2,
+          "start": "2026-02-09",
+          "end": "2026-06-12",
+          "breaks": [
+            {
+              "start": "2026-04-10",
+              "end": "2026-04-17",
+              "label": "Пролетна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2026/2027",
+          "index": 1,
+          "start": "2026-09-14",
+          "end": "2027-01-29",
+          "breaks": [
+            {
+              "start": "2026-12-21",
+              "end": "2027-01-03",
+              "label": "Коледна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2026/2027",
+          "index": 2,
+          "start": "2027-02-08",
+          "end": "2027-06-11",
+          "breaks": [
+            {
+              "start": "2027-04-02",
+              "end": "2027-04-09",
+              "label": "Пролетна ваканция"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "g3",
       "name": "1 курс ГП – гр. 1",
       "size": 25,
-      "programme": "Гранична полиция, 1 курс"
+      "programme": "Гранична полиция, 1 курс",
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "start": "2025-09-15",
+          "end": "2026-01-30",
+          "breaks": [
+            {
+              "start": "2025-12-22",
+              "end": "2026-01-04",
+              "label": "Коледна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2025/2026",
+          "index": 2,
+          "start": "2026-02-09",
+          "end": "2026-06-12",
+          "breaks": [
+            {
+              "start": "2026-04-10",
+              "end": "2026-04-17",
+              "label": "Пролетна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2026/2027",
+          "index": 1,
+          "start": "2026-09-14",
+          "end": "2027-01-29",
+          "breaks": [
+            {
+              "start": "2026-12-21",
+              "end": "2027-01-03",
+              "label": "Коледна ваканция"
+            }
+          ]
+        },
+        {
+          "academicYear": "2026/2027",
+          "index": 2,
+          "start": "2027-02-08",
+          "end": "2027-06-11",
+          "breaks": [
+            {
+              "start": "2027-04-02",
+              "end": "2027-04-09",
+              "label": "Пролетна ваканция"
+            }
+          ]
+        }
+      ]
     }
   ],
   "subjects": [
@@ -198,15 +430,22 @@
       "allowedRoomTypes": [
         "lecture"
       ],
-      "sessionsPerWeek": 2,
       "teacherIds": [
         "t2",
         "t3"
       ],
-      "groupIds": [
-        "g1",
-        "g2",
-        "g3"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 36,
+          "spread": "whole",
+          "groupIds": [
+            "g1",
+            "g2",
+            "g3"
+          ]
+        }
       ]
     },
     {
@@ -215,12 +454,19 @@
       "allowedRoomTypes": [
         "lecture"
       ],
-      "sessionsPerWeek": 1,
       "teacherIds": [
         "t3"
       ],
-      "groupIds": [
-        "g1"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 18,
+          "spread": "whole",
+          "groupIds": [
+            "g1"
+          ]
+        }
       ]
     },
     {
@@ -229,12 +475,19 @@
       "allowedRoomTypes": [
         "lecture"
       ],
-      "sessionsPerWeek": 1,
       "teacherIds": [
         "t3"
       ],
-      "groupIds": [
-        "g2"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 18,
+          "spread": "whole",
+          "groupIds": [
+            "g2"
+          ]
+        }
       ]
     },
     {
@@ -243,14 +496,21 @@
       "allowedRoomTypes": [
         "lecture"
       ],
-      "sessionsPerWeek": 2,
       "teacherIds": [
         "t1"
       ],
-      "groupIds": [
-        "g1",
-        "g2",
-        "g3"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 36,
+          "spread": "whole",
+          "groupIds": [
+            "g1",
+            "g2",
+            "g3"
+          ]
+        }
       ]
     },
     {
@@ -259,13 +519,20 @@
       "allowedRoomTypes": [
         "lab"
       ],
-      "sessionsPerWeek": 1,
       "teacherIds": [
         "t2",
         "t4"
       ],
-      "groupIds": [
-        "g1"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 18,
+          "spread": "whole",
+          "groupIds": [
+            "g1"
+          ]
+        }
       ]
     },
     {
@@ -274,12 +541,19 @@
       "allowedRoomTypes": [
         "lab"
       ],
-      "sessionsPerWeek": 1,
       "teacherIds": [
         "t4"
       ],
-      "groupIds": [
-        "g2"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 18,
+          "spread": "whole",
+          "groupIds": [
+            "g2"
+          ]
+        }
       ]
     },
     {
@@ -288,12 +562,19 @@
       "allowedRoomTypes": [
         "lab"
       ],
-      "sessionsPerWeek": 1,
       "teacherIds": [
         "t4"
       ],
-      "groupIds": [
-        "g3"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 18,
+          "spread": "whole",
+          "groupIds": [
+            "g3"
+          ]
+        }
       ]
     },
     {
@@ -303,13 +584,20 @@
         "sports",
         "training_ground"
       ],
-      "sessionsPerWeek": 2,
       "teacherIds": [
         "t5",
         "t6"
       ],
-      "groupIds": [
-        "g1"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 36,
+          "spread": "whole",
+          "groupIds": [
+            "g1"
+          ]
+        }
       ]
     },
     {
@@ -319,13 +607,20 @@
         "sports",
         "training_ground"
       ],
-      "sessionsPerWeek": 2,
       "teacherIds": [
         "t5",
         "t6"
       ],
-      "groupIds": [
-        "g2"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 36,
+          "spread": "whole",
+          "groupIds": [
+            "g2"
+          ]
+        }
       ]
     },
     {
@@ -335,13 +630,20 @@
         "sports",
         "training_ground"
       ],
-      "sessionsPerWeek": 2,
       "teacherIds": [
         "t5",
         "t6"
       ],
-      "groupIds": [
-        "g3"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 36,
+          "spread": "whole",
+          "groupIds": [
+            "g3"
+          ]
+        }
       ]
     },
     {
@@ -350,13 +652,25 @@
       "allowedRoomTypes": [
         "firing_range"
       ],
-      "sessionsPerWeek": 3,
       "teacherIds": [
         "t5",
         "t6"
       ],
-      "groupIds": [
-        "g1"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 24,
+          "spread": "range",
+          "window": {
+            "start": "2025-11-10",
+            "end": "2026-01-30",
+            "label": "втора половина"
+          },
+          "groupIds": [
+            "g1"
+          ]
+        }
       ]
     },
     {
@@ -365,13 +679,20 @@
       "allowedRoomTypes": [
         "training_ground"
       ],
-      "sessionsPerWeek": 3,
       "teacherIds": [
         "t5",
         "t6"
       ],
-      "groupIds": [
-        "g2"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 54,
+          "spread": "whole",
+          "groupIds": [
+            "g2"
+          ]
+        }
       ]
     },
     {
@@ -380,12 +701,19 @@
       "allowedRoomTypes": [
         "lab"
       ],
-      "sessionsPerWeek": 1,
       "teacherIds": [
         "t4"
       ],
-      "groupIds": [
-        "g3"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 18,
+          "spread": "whole",
+          "groupIds": [
+            "g3"
+          ]
+        }
       ]
     },
     {
@@ -394,12 +722,19 @@
       "allowedRoomTypes": [
         "lecture"
       ],
-      "sessionsPerWeek": 1,
       "teacherIds": [
         "t3"
       ],
-      "groupIds": [
-        "g3"
+      "semesters": [
+        {
+          "academicYear": "2025/2026",
+          "index": 1,
+          "totalSessions": 18,
+          "spread": "whole",
+          "groupIds": [
+            "g3"
+          ]
+        }
       ]
     }
   ]

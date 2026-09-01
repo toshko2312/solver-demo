@@ -15,6 +15,12 @@ from typing import Dict, List
 from .models import Hint, SolveRequest
 
 
+def _sessions(subject, req) -> int:
+    """How many sessions this subject runs in the semester being generated."""
+    spec = subject.semester(req.semester)
+    return spec.totalSessions if spec is not None else 0
+
+
 def check_references(req: SolveRequest) -> List[str]:
     """Dangling ids are a data bug, not an infeasibility -- report them separately."""
 
@@ -29,7 +35,7 @@ def check_references(req: SolveRequest) -> List[str]:
                     f"Subject '{subject.name}' names teacher '{tid}', "
                     "who does not exist."
                 )
-        for gid in subject.groupIds:
+        for gid in subject.all_group_ids():
             if gid not in group_ids:
                 errors.append(
                     f"Subject '{subject.name}' names group '{gid}', which does not exist."
@@ -37,8 +43,15 @@ def check_references(req: SolveRequest) -> List[str]:
 
     # A teacher whose preferred slots have all been blocked is not an error: the
     # preference simply becomes unsatisfiable and gets paid for in the objective.
+    # preferredRooms gets the same treatment, and deliberately so. It is
+    # positional, so dropping a dangling id does shift the rooms below it up a
+    # place -- but making that fatal would mean deleting one room invalidates the
+    # whole problem until every teacher who ranked it has been hand-edited, and
+    # deleting a room is an ordinary thing to do in the UI. The solver drops
+    # unknown ids and re-ranks what is left.
 
     for kind, items in (
+        ("role", req.roles),
         ("teacher", req.teachers),
         ("room", req.rooms),
         ("group", req.groups),
@@ -58,16 +71,64 @@ def build_hints(req: SolveRequest) -> List[Hint]:
     """Best-effort explanation of an INFEASIBLE (or timed-out) problem."""
 
     hints: List[Hint] = []
+
+    # 0. A subject whose groups are never in term together, or whose spread window
+    # misses their term entirely. Its sessions have nowhere legal to go, which
+    # reads as a flat INFEASIBLE without this.
+    groups_by_id = {g.id: g for g in req.groups}
+    dates = sorted({slot.date for slot in req.slots})
+    for subject in req.subjects:
+        if _sessions(subject, req) == 0:
+            continue
+        spec = subject.semester(req.semester)
+        usable = None
+        missing = []
+        for gid in subject.groups_for(req.semester):
+            group = groups_by_id.get(gid)
+            gs = group.semester(req.semester) if group else None
+            if gs is None:
+                missing.append(group.name if group else gid)
+                continue
+            teaching = {d for d in dates if gs.teaches_on(d)}
+            usable = teaching if usable is None else (usable & teaching)
+        if missing:
+            hints.append(
+                Hint(
+                    title=f"{subject.name} has groups out of term",
+                    detail=(
+                        f"{', '.join(missing)} have no dates for this semester, so the "
+                        "subject has no day on which all of its groups are present."
+                    ),
+                )
+            )
+            continue
+        if usable is not None and spec is not None and spec.spread.value == "range" and spec.window:
+            usable = {d for d in usable if spec.window.contains(d)}
+        if usable is not None and not usable:
+            hints.append(
+                Hint(
+                    title=f"{subject.name} has no usable dates",
+                    detail=(
+                        "Its groups are never all in term on the same teaching day"
+                        + (" inside the period it is spread across." if spec and spec.window
+                           else ".")
+                    ),
+                )
+            )
     n_slots = len(req.slots)
     groups_by_id = {g.id: g for g in req.groups}
 
     def head_count(subject) -> int:
-        return sum(groups_by_id[g].size for g in subject.groupIds if g in groups_by_id)
+        return sum(
+            groups_by_id[g].size
+            for g in subject.groups_for(req.semester)
+            if g in groups_by_id
+        )
 
     # 1. A subject with no room that both matches one of its accepted types and
     #    fits its students. This one is always fatal, so it goes first.
     for subject in req.subjects:
-        if subject.sessionsPerWeek == 0:
+        if _sessions(subject, req) == 0:
             continue
         size = head_count(subject)
         allowed = set(subject.allowedRoomTypes)
@@ -105,14 +166,14 @@ def build_hints(req: SolveRequest) -> List[Hint]:
     type_sets = {
         frozenset(subject.allowedRoomTypes)
         for subject in req.subjects
-        if subject.sessionsPerWeek
+        if _sessions(subject, req)
     }
     for type_set in sorted(type_sets, key=lambda ts: sorted(t.value for t in ts)):
         sizes = [
             head_count(subject)
             for subject in req.subjects
             if set(subject.allowedRoomTypes) <= type_set
-            for _ in range(subject.sessionsPerWeek)
+            for _ in range(_sessions(subject, req))
         ]
         if not sizes:
             continue
@@ -147,11 +208,11 @@ def build_hints(req: SolveRequest) -> List[Hint]:
     pools = {
         frozenset(subject.teacherIds)
         for subject in req.subjects
-        if subject.sessionsPerWeek
+        if _sessions(subject, req)
     }
     for pool in sorted(pools, key=lambda p: sorted(p)):
         load = sum(
-            subject.sessionsPerWeek
+            _sessions(subject, req)
             for subject in req.subjects
             if set(subject.teacherIds) <= pool
         )
@@ -176,8 +237,8 @@ def build_hints(req: SolveRequest) -> List[Hint]:
     # 4. A group with more sessions to attend than there are slots.
     per_group: Dict[str, int] = defaultdict(int)
     for subject in req.subjects:
-        for gid in subject.groupIds:
-            per_group[gid] += subject.sessionsPerWeek
+        for gid in subject.groups_for(req.semester):
+            per_group[gid] += _sessions(subject, req)
     for group in req.groups:
         load = per_group.get(group.id, 0)
         if load > n_slots:
@@ -192,7 +253,7 @@ def build_hints(req: SolveRequest) -> List[Hint]:
             )
 
     # 5. Total placements against total room-slots, ignoring type entirely.
-    total_sessions = sum(s.sessionsPerWeek for s in req.subjects)
+    total_sessions = sum(_sessions(s, req) for s in req.subjects)
     total_capacity = len(req.rooms) * n_slots
     if total_sessions > total_capacity:
         hints.append(

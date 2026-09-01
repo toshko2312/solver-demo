@@ -1,4 +1,5 @@
 import { ROOM_TYPE_COLOR, ROOM_TYPE_LABEL, subjectColor } from '../../theme';
+import { semesterKey } from '../../types';
 import type { Group, Subject, Teacher } from '../../types';
 
 interface Props {
@@ -28,16 +29,15 @@ export function SubjectsTable({
           <tr>
             <th>Subject</th>
             <th>Room types</th>
-            <th>Sessions / wk</th>
+            <th>Semesters</th>
             <th>Teachers</th>
-            <th>Groups</th>
             <th className="right">Actions</th>
           </tr>
         </thead>
         <tbody>
           {subjects.length === 0 && (
             <tr>
-              <td colSpan={6} className="empty-row">
+              <td colSpan={5} className="empty-row">
                 No subjects yet.
               </td>
             </tr>
@@ -72,21 +72,32 @@ export function SubjectsTable({
                     ))}
                   </div>
                 </td>
-                <td className="num">{s.sessionsPerWeek}</td>
+                <td>
+                  {s.semesters.length === 0 ? (
+                    <span className="muted-sm">—</span>
+                  ) : (
+                    // Groups belong to the semester, so they are shown with it
+                    // rather than in a column of their own -- a subject can run
+                    // for a different cohort in each term.
+                    s.semesters.map((x) => (
+                      <div key={semesterKey(x)} className="semcell">
+                        <span className="semcell__label">
+                          {x.academicYear} S{x.index}: {x.totalSessions}
+                        </span>
+                        {x.groupIds.map((gid) => (
+                          <span key={gid} className="badge badge--plain">
+                            {groupName(gid)}
+                          </span>
+                        ))}
+                      </div>
+                    ))
+                  )}
+                </td>
                 <td>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                     {s.teacherIds.map((id) => (
                       <span key={id} className="badge badge--plain">
                         {teacherName(id)}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {s.groupIds.map((gid) => (
-                      <span key={gid} className="badge badge--plain">
-                        {groupName(gid)}
                       </span>
                     ))}
                   </div>

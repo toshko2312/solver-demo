@@ -8,7 +8,9 @@ import { solve } from './api';
 import { SettingsDialog } from './components/SettingsDialog';
 import { emptyProblem, seedFull, seedSmall } from './seed';
 import { defaultSettings } from './settings';
-import type { Problem, RunState, SolveResponse } from './types';
+import { knownSemesters, sessionsIn } from './slots';
+import { semesterKey } from './types';
+import type { Problem, RunState, SemesterRef, SolveResponse } from './types';
 
 type Screen = 'data' | 'generate' | 'result';
 
@@ -18,20 +20,40 @@ export function App() {
   const [problem, setProblem] = useState<Problem>(emptyProblem);
   const [screen, setScreen] = useState<Screen>('data');
   const [run, setRun] = useState<RunState>('empty');
-  const [result, setResult] = useState<SolveResponse | null>(null);
+  // One timetable per semester. Generating a semester replaces its entry and
+  // leaves every other semester's result untouched.
+  const [results, setResults] = useState<Record<string, SolveResponse>>({});
+  const [semester, setSemester] = useState<SemesterRef | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const semesters = knownSemesters(problem.groups);
+  // Default to the first semester that actually has sessions to place, not just
+  // the first on the calendar: a group can carry dates for a future year long
+  // before any subject runs in it, and defaulting there offers a solve of nothing.
+  const firstWithWork =
+    semesters.find((x) => problem.subjects.some((s) => sessionsIn(s, x) > 0)) ?? semesters[0];
+  const active = semester ?? firstWithWork ?? null;
+  const result = active ? (results[semesterKey(active)] ?? null) : null;
+
+  const pickSemester = (next: SemesterRef) => {
+    setSemester(next);
+    setError(null);
+    // The run state describes the semester on screen, so it follows the pick.
+    setRun(results[semesterKey(next)] ? 'solved' : 'empty');
+  };
   // Solver knobs live here alongside the problem, and are sent with every solve.
   const [settings, setSettings] = useState(defaultSettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const generate = async () => {
-    if (run === 'solving') return;
+    if (run === 'solving' || !active) return;
     setRun('solving');
     setError(null);
     setScreen('generate');
     try {
-      const response = await solve(problem, settings);
-      setResult(response);
+      const response = await solve(problem, active, settings);
+      // Replaces whatever this semester had; the others are left alone.
+      setResults((prev) => ({ ...prev, [semesterKey(active)]: response }));
       if (response.status === 'OPTIMAL' || response.status === 'FEASIBLE') {
         setRun('solved');
         setScreen('result');
@@ -40,7 +62,11 @@ export function App() {
         setRun('failed');
       }
     } catch (e) {
-      setResult(null);
+      setResults((prev) => {
+        const next = { ...prev };
+        delete next[semesterKey(active)];
+        return next;
+      });
       setError(e instanceof Error ? e.message : String(e));
       setRun('error');
     }
@@ -48,7 +74,8 @@ export function App() {
 
   const loadSeed = (build: () => Problem) => {
     setProblem(build());
-    setResult(null);
+    setResults({});
+    setSemester(null);
     setRun('empty');
     setError(null);
     setScreen('data');
@@ -56,11 +83,12 @@ export function App() {
 
   const editProblem = (next: Problem) => {
     setProblem(next);
-    // Any edit invalidates the result: the grid on screen no longer matches the
-    // data it was generated from.
+    // Any edit invalidates every stored timetable: the grids on screen no longer
+    // match the data they were generated from, and an edit to a room or a teacher
+    // can reach across semesters.
     if (run === 'solved' || run === 'failed') {
       setRun('empty');
-      setResult(null);
+      setResults({});
     }
   };
 
@@ -141,6 +169,9 @@ export function App() {
       {screen === 'generate' && (
         <GenerateScreen
           problem={problem}
+          semester={active}
+          semesters={semesters}
+          onPickSemester={pickSemester}
           run={run}
           result={result}
           error={error}
@@ -163,6 +194,10 @@ export function App() {
       {screen === 'result' && (
         <ResultScreen
           problem={problem}
+          semester={active}
+          semesters={semesters}
+          results={results}
+          onPickSemester={pickSemester}
           run={run}
           result={result}
           onGenerate={generate}

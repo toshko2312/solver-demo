@@ -171,9 +171,26 @@ export function SettingsDialog({ settings, onChange, onClose }: Props) {
         </Setting>
 
         <Setting
+          label="Room preference weight"
+          help="How much the scheduler cares about giving teachers the rooms they ranked. First choice is free; each place further down the list costs this much again. Ranking is scored per room type, so ranking labs says nothing about which sports hall you get."
+          meta="Cost per rank step away from a teacher's first-choice room of that type. Below the slot weight by default: when both cannot be met, the slot is the one worth keeping."
+        >
+          <input
+            className="setting__number"
+            type="number"
+            min={0}
+            max={1000}
+            value={settings.roomPreferenceWeight}
+            onChange={(e) =>
+              set({ roomPreferenceWeight: Math.min(1000, Math.max(0, Number(e.target.value))) })
+            }
+          />
+        </Setting>
+
+        <Setting
           label="Gap weight"
-          help="How much the scheduler cares about avoiding free periods in the middle of a class's day. Higher means tighter days for students, which may cost teachers their preferred slots."
-          meta="Small example: 12 gap units across 3 split days at the default 1, and none at all at 10 — at the cost of three teacher preferences."
+          help="How much the scheduler cares about avoiding free periods in the middle of a class's day. It orders solutions within the gap stage only: group gaps are settled last, after every teacher rank, so raising this can no longer buy a compact day at the price of a teacher preference."
+          meta="Gaps are the final rung of the priority ladder. By the time they are considered every teacher tier is frozen at its best, so this weight cannot outbid a rank."
         >
           <input
             className="setting__number"

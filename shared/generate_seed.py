@@ -44,6 +44,49 @@ TEACHERS = [
     ("ст. преп. Оруш",       K_SPT),   ("ст. преп. Личев",     K_SPT),
 ]
 
+# ---- academic rank, read off the name --------------------------------------
+# The ranks were always in the names; this is what turns them into a field the
+# solver can order teachers by. Longest prefix first: "гл. ас. д-р" also ends in
+# "ас.", and matching that first would demote every chief assistant.
+# One table drives three things: matching a rank off an instructor's name, the
+# `roles` array the seed ships, and the weights the priority ladder runs in.
+# (prefix, id, full label, weight) -- weight is a tier key, so only the ordering
+# and which ranks share a value matter.
+RANKS = [
+    ("проф.",     "professor",           "проф. — Professor",         6),
+    ("доц.",      "associate_professor", "доц. — Assoc. Professor",   5),
+    ("гл. ас.",   "chief_assistant",     "гл. ас. — Chief Assistant", 4),
+    ("ст. преп.", "senior_lecturer",     "ст. преп. — Senior Lecturer", 3),
+    ("преп.",     "lecturer",            "преп. — Lecturer",          2),
+    ("ас.",       "assistant",           "ас. — Assistant",           1),
+]
+
+roles = [{"id": rid, "name": name, "short": prefix, "weight": w}
+         for prefix, rid, name, w in RANKS]
+
+def role_of(name):
+    """Longest prefix first: "гл. ас. д-р" also ends in "ас.", and matching that
+    first would demote every chief assistant."""
+    for prefix, rid, _label, _w in sorted(RANKS, key=lambda r: -len(r[0])):
+        if name.startswith(prefix):
+            return rid
+    raise ValueError(f"no rank prefix in {name!r}")
+
+
+# ---- ranked room preferences ------------------------------------------------
+# Index 0 is the room the instructor most wants. Everyone in a катедра ranks the
+# same rooms in the same order on purpose: that is what makes them collide, and a
+# collision is the only thing that can show rank deciding an outcome. The SPT
+# staff are the sharpest case -- six of them, ranks from доц. down to ас., all
+# wanting Полигон за специална тактика first, and only one полигон.
+DEPT_ROOM_RANKING = {
+    K_PUB:   ["r1", "r2", "r3"],
+    K_NAK:   ["r1", "r3", "r2"],
+    K_OORGK: ["r2", "r3", "r1"],
+    K_OID:   ["r16", "r13", "r14", "r15"],
+    K_SPT:   ["r21", "r22", "r19", "r20", "r18", "r17"],
+}
+
 # Preferred slots per instructor: deliberately narrow for some, so the soft
 # constraints have something to trade. Pattern varies by index.
 def prefs(i):
@@ -62,7 +105,8 @@ def prefs(i):
     return [f"{d.lower()}-{p}" for d in DAYS for p in (1, 2, 3, 4)]
 
 
-teachers = [{"id": f"t{i+1}", "name": n, "department": d, "preferredSlots": prefs(i)}
+teachers = [{"id": f"t{i+1}", "name": n, "department": d, "role": role_of(n),
+             "preferredSlots": prefs(i), "preferredRooms": DEPT_ROOM_RANKING[d]}
             for i, (n, d) in enumerate(TEACHERS)]
 by_dept = collections.defaultdict(list)
 for t, (_n, d) in zip(teachers, TEACHERS):
@@ -89,6 +133,48 @@ room("Стрелбище – открито", "firing_range", 30, "Стрелк�
 room("Полигон за специална тактика", "training_ground", 40, "Учебен полигон")
 room("Тренировъчен град", "training_ground", 40, "Учебен полигон")
 
+# ---- academic calendar -----------------------------------------------------
+# Two semesters a year, September to before summer, with the winter break and a
+# spring break carved out. Future years are here so the UI has something to show
+# for "add dates for 2026/2027" without inventing them by hand.
+import datetime as _dt
+
+ACADEMIC_YEARS = {
+    "2025/2026": [
+        (1, "2025-09-15", "2026-01-30", [("2025-12-22", "2026-01-04", "Коледна ваканция")]),
+        (2, "2026-02-09", "2026-06-12", [("2026-04-10", "2026-04-17", "Пролетна ваканция")]),
+    ],
+    "2026/2027": [
+        (1, "2026-09-14", "2027-01-29", [("2026-12-21", "2027-01-03", "Коледна ваканция")]),
+        (2, "2027-02-08", "2027-06-11", [("2027-04-02", "2027-04-09", "Пролетна ваканция")]),
+    ],
+}
+
+def semesters_for_group():
+    return [
+        {"academicYear": year, "index": idx, "start": start, "end": end,
+         "breaks": [{"start": b0, "end": b1, "label": lab} for b0, b1, lab in brk]}
+        for year, entries in ACADEMIC_YEARS.items()
+        for idx, start, end, brk in entries
+    ]
+
+def teaching_weeks(year, idx):
+    """ISO weeks that carry at least one Mon-Fri teaching day, breaks excluded."""
+    _i, start, end, brk = next(e for e in ACADEMIC_YEARS[year] if e[0] == idx)
+    start, end = _dt.date.fromisoformat(start), _dt.date.fromisoformat(end)
+    holidays = [(_dt.date.fromisoformat(a), _dt.date.fromisoformat(b)) for a, b, _l in brk]
+    weeks, day = set(), start
+    while day <= end:
+        if day.weekday() < 5 and not any(a <= day <= b for a, b in holidays):
+            weeks.add(day.isocalendar()[:2])
+        day += _dt.timedelta(days=1)
+    return len(weeks)
+
+# The seed schedules the first semester of 2025/2026; the rest exist so the
+# semester picker and the "future year" case have real data behind them.
+SEED_YEAR, SEED_INDEX = "2025/2026", 1
+WEEKS = teaching_weeks(SEED_YEAR, SEED_INDEX)
+
 # ---- groups: 4 курса x (ППООР 3 групи, ГП 2 групи) -------------------------
 groups, cohorts = [], []
 YEARS = int(os.environ.get("YEARS", "4"))
@@ -101,7 +187,8 @@ for year in range(1, YEARS + 1):
         for g in range(1, n_groups + 1):
             gid = f"g{len(groups)+1}"
             groups.append({"id": gid, "name": f"{year} курс {spec} – гр. {g}",
-                           "size": 25, "programme": f"{label}, {year} курс"})
+                           "size": 25, "programme": f"{label}, {year} курс",
+                           "semesters": semesters_for_group()})
             ids.append(gid)
         cohorts.append({"year": year, "spec": spec, "groupIds": ids})
 
@@ -137,9 +224,15 @@ CURRICULUM = {
 
 subjects = []
 def subject(name, rtypes, per_week, teacher_ids, group_ids):
+    """Sessions are now a per-semester *total* on real dates, so the weekly rate
+    the curriculum is written in becomes rate x teaching weeks."""
     subjects.append({"id": f"s{len(subjects)+1}", "name": name,
-                     "allowedRoomTypes": rtypes, "sessionsPerWeek": per_week,
-                     "teacherIds": teacher_ids, "groupIds": group_ids})
+                     "allowedRoomTypes": rtypes,
+                     "semesters": [{"academicYear": SEED_YEAR, "index": SEED_INDEX,
+                                    "totalSessions": per_week * WEEKS,
+                                    "spread": "whole",
+                                    "groupIds": group_ids}],
+                     "teacherIds": teacher_ids})
 
 for c in cohorts:
     tag = f"{c['year']} к. {c['spec']}"
@@ -167,18 +260,30 @@ data = collections.OrderedDict([
      "surnames rather than real staff. Lectures are delivered to the whole поток (a multi-group "
      "subject needing a large аудитория); семинарни занятия run per group."),
     ("slotConfig", {"days": DAYS, "periods": PERIODS, "periodTimes": PERIOD_TIMES, "blockedSlots": []}),
-    ("teachers", teachers), ("rooms", rooms), ("groups", groups), ("subjects", subjects),
+    ("roles", roles), ("teachers", teachers), ("rooms", rooms), ("groups", groups), ("subjects", subjects),
 ])
 out = os.environ.get(
     "OUT", os.path.join(os.path.dirname(os.path.abspath(__file__)), "seed-full.json")
 )
 open(out, "w").write(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
-sessions = sum(s["sessionsPerWeek"] for s in subjects)
+# The rankings above hardcode room ids, which are positional. Catch a drift here
+# rather than shipping a seed whose preferences point at the wrong rooms.
+_room_ids = {r["id"] for r in rooms}
+for _dept, _ranked in DEPT_ROOM_RANKING.items():
+    missing = [r for r in _ranked if r not in _room_ids]
+    assert not missing, f"{_dept} ranks unknown room(s) {missing}"
+
+def _total(s):
+    return sum(x["totalSessions"] for x in s["semesters"])
+
+sessions = sum(_total(s) for s in subjects)
 per_group = collections.Counter()
 for s in subjects:
-    for g in s["groupIds"]:
-        per_group[g] += s["sessionsPerWeek"]
+    for x in s["semesters"]:
+        for g in x["groupIds"]:
+            per_group[g] += x["totalSessions"]
 print(f"teachers={len(teachers)} rooms={len(rooms)} groups={len(groups)} subjects={len(subjects)}")
-print(f"sessions/week={sessions}  slots={len(SLOTS)}")
+print(f"semester={SEED_YEAR} S{SEED_INDEX}  teaching weeks={WEEKS}")
+print(f"sessions/semester={sessions}  weekday-periods={len(SLOTS)}")
 print(f"group load: min={min(per_group.values())} max={max(per_group.values())}")

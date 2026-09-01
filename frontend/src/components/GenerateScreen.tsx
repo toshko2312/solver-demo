@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 
 import { Button } from './ds/Button';
+import { Select } from './ds/Select';
 import { countNonDefault, formatLimit } from '../settings';
-import { openSlots } from '../slots';
-import type { Problem, RunState, SolveResponse, SolverSettings } from '../types';
+import { semesterSlots, sessionsIn } from '../slots';
+import { semesterKey } from '../types';
+import type { Problem, RunState, SemesterRef, SolveResponse, SolverSettings } from '../types';
 
 interface Props {
   problem: Problem;
+  semester: SemesterRef | null;
+  semesters: SemesterRef[];
+  onPickSemester: (next: SemesterRef) => void;
   run: RunState;
   result: SolveResponse | null;
   error: string | null;
@@ -19,6 +24,9 @@ interface Props {
 
 export function GenerateScreen({
   problem,
+  semester,
+  semesters,
+  onPickSemester,
   run,
   result,
   error,
@@ -40,8 +48,14 @@ export function GenerateScreen({
   }, [run]);
 
   const changedCount = countNonDefault(settings);
-  const open = openSlots(problem.slotConfig).length;
-  const sessions = problem.subjects.reduce((n, s) => n + s.sessionsPerWeek, 0);
+  // The dated slots this semester actually has, not the weekday template's 30 --
+  // a semester is weeks of them, and the template count would badly understate it.
+  const open = semester
+    ? semesterSlots(problem.slotConfig, problem.groups, semester).length
+    : 0;
+  const sessions = semester
+    ? problem.subjects.reduce((n, s) => n + sessionsIn(s, semester), 0)
+    : 0;
   const stats = result?.stats ?? null;
   // Always describe the run by the settings it was solved with, never by the ones
   // currently on screen -- those may have been changed since.
@@ -97,11 +111,43 @@ export function GenerateScreen({
                 Settings
               </button>
             </div>
-            <Button variant="primary" large onClick={onGenerate} disabled={run === 'solving'}>
-              {run === 'solving' ? 'Solving…' : 'Generate timetable'}
-            </Button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              {semesters.length > 0 && (
+                <div className="muted-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>Semester</span>
+                  <Select
+                    size="sm"
+                    aria-label="Semester"
+                    value={semester ? semesterKey(semester) : ''}
+                    options={semesters.map((x) => ({
+                      value: semesterKey(x),
+                      label: `${x.academicYear} · Semester ${x.index}`,
+                    }))}
+                    onChange={(key) => {
+                      const next = semesters.find((x) => semesterKey(x) === key);
+                      if (next) onPickSemester(next);
+                    }}
+                  />
+                </div>
+              )}
+              <Button
+                variant="primary"
+                large
+                onClick={onGenerate}
+                disabled={run === 'solving' || !semester}
+              >
+                {run === 'solving' ? 'Solving…' : 'Generate timetable'}
+              </Button>
+            </div>
           </div>
         </div>
+
+        {semester && (
+          <div className="muted-sm" style={{ marginTop: 8 }}>
+            Generating replaces the timetable stored for {semester.academicYear} · Semester{' '}
+            {semester.index}. Other semesters are left as they are.
+          </div>
+        )}
 
         <div className="summary">
           {summary.map((s) => (
@@ -179,7 +225,8 @@ export function GenerateScreen({
                 <div className="eyebrow">Soft penalty</div>
                 <div className="statgrid__value">{stats.objectiveValue ?? 0}</div>
                 <div className="statgrid__note">
-                  {stats.preferenceViolations} preference miss(es) · {stats.gapPenalty} group gap(s)
+                  {stats.preferenceViolations} preference miss(es) · {stats.roomPreferencePenalty}{' '}
+                  room cost · {stats.gapPenalty} group gap(s)
                 </div>
               </div>
               <div className="statgrid__tile">
@@ -211,6 +258,44 @@ export function GenerateScreen({
                     {e}
                   </div>
                 ))}
+              </div>
+            )}
+
+            {stats.tiers.length > 0 && (
+              <div className="ladder" style={{ marginTop: 14 }}>
+                <div className="eyebrow">Priority ladder — highest rank settled first</div>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th className="right">Teachers</th>
+                      <th className="right">Penalty</th>
+                      <th>Outcome</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.tiers.map((tier) => (
+                      <tr key={tier.weight}>
+                        <td className="name">
+                          {tier.roles.length > 0 ? tier.roles.join(' · ') : 'unranked'}{' '}
+                          <span className="muted-sm">w{tier.weight}</span>
+                        </td>
+                        <td className="right">{tier.teacherCount}</td>
+                        <td className="right">{tier.penalty}</td>
+                        <td>
+                          {tier.status === 'OPTIMAL' ? (
+                            <span className="muted-sm">best possible · {tier.solveTimeSeconds}s</span>
+                          ) : (
+                            <span className="badge badge--warn">
+                              {tier.status} — ran out of time, so the ranks below it were held to a
+                              number this one might have improved on
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
 

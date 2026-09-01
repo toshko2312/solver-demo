@@ -4,6 +4,7 @@
 
 import seedFullData from '../../shared/seed-full.json';
 import seedSmallData from '../../shared/seed-small.json';
+import { DEFAULT_ROLES } from './theme';
 import type { Problem } from './types';
 
 export function emptyProblem(): Problem {
@@ -22,6 +23,9 @@ export function emptyProblem(): Problem {
       ],
       blockedSlots: [],
     },
+    // A blank project still starts with the six ranks; they are ordinary data
+    // from here on, editable under Data setup -> Roles.
+    roles: DEFAULT_ROLES.map((r) => ({ ...r })),
     teachers: [],
     rooms: [],
     groups: [],
@@ -30,9 +34,11 @@ export function emptyProblem(): Problem {
 }
 
 function load(data: unknown): Problem {
-  const { slotConfig, teachers, rooms, groups, subjects } = data as Problem;
+  const { slotConfig, roles, teachers, rooms, groups, subjects } = data as Problem;
   // Deep copy: the UI mutates the loaded problem freely.
-  return JSON.parse(JSON.stringify({ slotConfig, teachers, rooms, groups, subjects })) as Problem;
+  return JSON.parse(
+    JSON.stringify({ slotConfig, roles, teachers, rooms, groups, subjects }),
+  ) as Problem;
 }
 
 /** One курс: solves in a fraction of a second and stays readable in the grid. */

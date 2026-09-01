@@ -13,6 +13,7 @@ export function defaultSettings(): SolverSettings {
   return {
     maxTimeInSeconds: DEFAULT_SOLVE_SECONDS,
     preferenceWeight: 10,
+    roomPreferenceWeight: 5,
     gapWeight: 1,
     stopAfterFirstSolution: false,
     useSymmetryBreaking: true,

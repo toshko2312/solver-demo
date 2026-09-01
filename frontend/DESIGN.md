@@ -1,0 +1,218 @@
+# Design system
+
+This UI is not styled freehand. It is derived from a Claude Design project, and every visual
+decision below comes from that project or from the design system it imports. **Read this before
+changing anything under `frontend/src/styles/` or `frontend/src/components/`.**
+
+## Provenance
+
+| | |
+|---|---|
+| Design project | **Timetable Generator** — `9e49658b-89f5-4a63-a670-3af294cd3e88` |
+| Canvas file | `Timetable Generator.dc.html` |
+| Design system | **Apple Design System** — `apple-design-system-af240dc4-b8f2-427f-a69a-681d42f9b7b5` |
+| URL | <https://claude.ai/design/p/9e49658b-89f5-4a63-a670-3af294cd3e88> |
+
+Re-read it with the `DesignSync` tool (authorize once with `/design-login`):
+
+```
+DesignSync list_files  projectId=9e49658b-89f5-4a63-a670-3af294cd3e88
+DesignSync get_file    projectId=…  path="Timetable Generator.dc.html"
+DesignSync get_file    projectId=…  path="_ds/apple-design-system-…/readme.md"
+```
+
+`frontend/src/styles/ds/` is a **verbatim copy** of the project's `_ds/…/styles.css` and
+`_ds/…/tokens/*.css` (verified byte-identical). Never hand-edit those files — re-pull them. Anything
+app-specific belongs in `frontend/src/styles/app.css`.
+
+`support.js` in the design project is the canvas runtime (`x-dc`, `sc-if`, `sc-for`). It has no
+bearing on this app.
+
+## Non-negotiables
+
+From the design system's own readme. These are not preferences.
+
+- **One accent.** Action Blue `#0066cc` (`--color-primary`) carries every interactive element.
+  `#0071e3` (`--color-primary-focus`) is the hover/focus shade; `#2997ff` is the on-dark variant.
+  No second accent colour.
+- **Ink is `#1d1d1f`, never pure black.** `#000000` is reserved for the top nav bar and true
+  photographic voids.
+- **Weight ladder is 300 / 400 / 600 / 700. 500 is deliberately never used.**
+- **Exactly one shadow exists in the system** — `rgba(0,0,0,.22) 3px 5px 30px` — and it applies only
+  to product photography resting on a surface. **No shadows on cards, buttons, menus or chrome.**
+  Elevation is expressed with hairlines and surface colour, not blur.
+- **No CSS gradients anywhere.** No repeating patterns or textures.
+- **Borders are hairlines.** `rgba(0,0,0,.06)`–`rgba(0,0,0,.14)`, 1px. Dashed borders mean one
+  specific thing (see Extensions) and are not decoration.
+- **Press state is `transform: scale(0.95)` with no colour shift**, on every button variant.
+- **Hover is deliberately unspecified** by the source. Do not invent elaborate hover states; a
+  subtle background change on menu rows is the ceiling.
+- **No emoji, ever.** No decorative unicode glyphs.
+- **Copy is terse and declarative.** Short noun phrases and imperatives. No exclamation points, no
+  superlatives, no first person.
+- `backdrop-filter: blur()` is functional only — the tab bar floating over content — never
+  decorative.
+
+## Tokens
+
+`frontend/src/styles/ds/styles.css` imports all five. New CSS uses `var(--…)`; do not re-type a hex
+that already has a token.
+
+| File | Covers |
+|---|---|
+| `tokens/colors.css` | accent, ink, surfaces, hairlines, the one shadow |
+| `tokens/typography.css` | `--font-display` / `--font-text` and the full `--text-*` scale |
+| `tokens/spacing.css` | `--space-xxs` 4 → `--space-section` 80, 8px base unit |
+| `tokens/radius.css` | `--radius-xs` 5, `sm` 8, `md` 11, `lg` 18, `pill` 9999 |
+| `tokens/fonts.css` | loads Inter (see Substitutions) |
+
+**Type.** SF Pro Display for headlines (`--font-display`), SF Pro Text for everything ≤ 20px
+(`--font-text`). Display sizes carry negative letter-spacing — the "Apple tight" cadence. Marketing
+body is 17px with 1.47 line-height; this app is a dense tool, so it runs its own smaller ladder
+(14px table names, 13px values, 12px labels and hints, 11px uppercase eyebrows at `.06em`).
+
+**Spacing.** 8px base unit. Card padding 18–24px, screen padding 24px.
+
+## Radii ladder
+
+| Radius | Used for |
+|---|---|
+| 0 | full-bleed tiles |
+| 5–7px | slot cells, microbtn |
+| 8px | compact utility buttons, **dropdown menu options** |
+| 10px | text inputs, **dropdown trigger** |
+| 11px | pearl-capsule button |
+| 12px | **dropdown menu panel**, nested group boxes |
+| 18px | cards, modals, panels |
+| 9999px | every pill button, chip and badge — the pill is the brand's action signal |
+
+## Component inventory
+
+The design system's bundle (`_ds/…/_ds_bundle.js`) exposes exactly:
+
+`Button`, `IconButton`, `OptionChip`, `ProductTile`, `UtilityCard`, `StickyBar`, `SearchInput`,
+`GlobalNav`, `SubNav`.
+
+It **deliberately does not** ship `Select`, `Dialog`, `Tabs`, `Switch`, `Checkbox`, `Radio` or
+`Toast` — the source analysis never surfaced them, and the system's rule is not to invent. Where this
+app needs one of those, the spec comes from the **canvas file's own component-set screen**, not from
+imagination.
+
+The bundle is a canvas-runtime artefact and is not consumed at build time. This app re-implements
+what it needs over the vendored tokens:
+
+- CSS classes in `frontend/src/styles/app.css` (`.btn`, `.chip`, `.badge`, `.microbtn`, `.dd`, …)
+- thin typed wrappers in `frontend/src/components/ds/`
+
+`ds/Button.tsx` is the reference for that pattern: four variants matching the bundle's, no inline
+styles, press state in CSS.
+
+## Control specs
+
+Transcribed from the canvas file. Sizes are literal.
+
+### Button (`.btn`)
+
+| Variant | Background | Foreground | Shape |
+|---|---|---|---|
+| `primary` | `--color-primary` | `#fff` | pill, 7px 16px |
+| `secondary-pill` | `#fff` | `--color-primary` | pill, 1px hairline ring |
+| `dark-utility` | `--color-ink` | `#fff` | 8px radius, 8px 14px |
+| `pearl-capsule` | `--color-surface-pearl` | `--color-ink` | 11px radius, hairline ring |
+
+Press: `scale(.95)`. Disabled: `opacity .45`.
+
+### Chip (`.chip`) — multi-choice
+
+Pill, `5px 11px`, 12px. Inactive `#fff` + `1px solid rgba(0,0,0,.1)`; active fills
+`--color-primary` with white text. **Chips are the design's answer for multi-choice fields** — room
+types, teacher pools, group cohorts. Do not replace a chip row with a multi-select dropdown.
+
+### Micro button (`.microbtn`)
+
+7px radius, `4px 10px`, 12px semibold. Idle `#f0f0f2` / `#6e6e73`; active `--color-ink` / `#fff`.
+
+### Badge (`.badge`)
+
+Pill, `3px 9px`, 11px semibold, `.01em`. Tinted per room type; `--plain` is the neutral grey form.
+
+### Dropdown (`.dd`) — single choice
+
+A **button trigger + caret + menu panel**, not a native `<select>`. Native select chrome is
+OS-drawn and cannot carry the design; there are no `<select>` elements in this app.
+
+**Trigger** — flex, space-between, gap 8px, full width, `padding: 9px 12px`, `border-radius: 10px`,
+`font-size: 14px`, text-align left.
+
+| State | Background | Colour | Border | Ring |
+|---|---|---|---|---|
+| default | `#fff` | `#1d1d1f` | `1px solid rgba(0,0,0,.14)` | none |
+| open | `#fff` | `#1d1d1f` | `1px solid #0066cc` | `0 0 0 3px rgba(0,102,204,.16)` |
+| disabled | `#f5f5f7` | `#a1a1a6` | `1px solid rgba(0,0,0,.14)` | none |
+
+**Caret** — a CSS triangle, never a glyph or an icon font. 4px transparent left/right borders with a
+`5px` solid top border in `#6e6e73` pointing down, `rgba(0,0,0,.3)` when disabled, or a `5px` bottom
+border in `#0066cc` pointing up when open.
+
+**Menu panel** — 6px below the trigger, `padding: 5px`, `border-radius: 12px`, `#fff`,
+`1px solid rgba(0,0,0,.08)`, rows separated by a 1px gap. **No shadow.**
+
+**Option row** — flex, space-between, `padding: 8px 10px`, `border-radius: 8px`, `font-size: 13.5px`.
+Selected: `#e9f1fb` fill, `#0a4f9e` text, weight 600, with a right-aligned 12px `#0066cc` semibold
+"Selected" label. Unselected: transparent, `#1d1d1f`, weight 400.
+
+### Text input
+
+`padding: 9px 12px`, `border-radius: 10px`, `1px solid rgba(0,0,0,.14)`, `#fff`, 14px. Focus moves
+the border to `--color-primary`. Same geometry as the dropdown trigger — they sit in the same forms
+and must line up.
+
+### Entity form field
+
+12px semibold label in `#3a3a3c`, 6px gap, control, then an 11.5px `#86868b` hint at 1.45
+line-height. Primary + `secondary-pill` buttons in the footer.
+
+### Card, table, session card
+
+Card: `#fff`, `1px solid rgba(0,0,0,.06)`, 18px radius, no shadow. Table: 11px uppercase `.04em`
+headers on parchment, 14px semibold name cells, 13px `#6e6e73` value cells, `#f0f0f0` row rules.
+Session card: subject-tinted fill, 3px colour spine, 12.5px semibold subject; soft conflict adds a
+dashed edge and an amber marker; selected is a white fill with a 2px Action Blue ring.
+
+## Extensions
+
+Things this app needs that the design project does not document. They are listed here so the line
+between "derived" and "invented" stays visible.
+
+- **`.dd--sm`** — the dropdown at 13px / `6px 10px` / 8px radius, for the dense inline rows
+  (semester editors, week navigation). The canvas file documents only the field size.
+- **`.dd__menu` is portalled and `position: fixed`.** The canvas file positions the panel
+  `absolute` inside the field. The real modal is `max-height: 86vh; overflow-y: auto`, which would
+  clip it, so the panel renders in a portal at a computed rect and flips above the trigger when
+  there is no room below. Visually identical to the spec.
+- **`.chip--disabled`** — a group that has no term dates for the semester its chip row belongs to.
+  Uses the disabled-dropdown values: parchment `#f5f5f7` fill, `#a1a1a6` ink, solid hairline.
+- **Dashed borders** appear only on the soft-conflict session card and blocked slot cells. Do not
+  reach for a dashed border to mean "disabled" or "empty".
+- **`.sesscard--more`** — a grid cell shows at most **two** session cards (`SHOWN_PER_CELL` in
+  `ResultScreen.tsx`); the rest collapse into one `+ N more` card. It is a control, not a session,
+  so it takes parchment fill, `#6e6e73` text and no subject tint or colour spine. The copy is a
+  count, no names — the design's copy is terse. The threshold is the same in both densities: how
+  much the grid hides must not depend on a display toggle. The design project's grid loops its
+  sessions uncapped and documents no overflow affordance.
+- **`.modal--fixed` + `.modal__scroll`** — the overflow dialog is a **constant** 520px (capped at
+  `86vh`), so a period with three sessions and one with thirty open the same box; the list inside is
+  what scrolls. Chrome — backdrop, 18px radius, hairline, `Close` link — is inherited from the entity
+  modal; no shadow is added. The design project documents no dialog at all.
+- **Status colours** (`#1f7a3d` ok, `#8a4408` warn, `#7d1f1f` bad and their tints) are an app
+  addition; the source system has no semantic status palette.
+
+## Substitutions to preserve
+
+- **Inter stands in for SF Pro.** SF Pro is Apple-proprietary and no files were provided;
+  `tokens/fonts.css` loads Inter from Google Fonts, and `system-ui, -apple-system` in the stack still
+  resolves to real SF Pro on Apple platforms. Keep both in every font stack.
+- **Icons are placeholders.** The source documents icons by role, not by asset. Prefer CSS shapes
+  (the dropdown caret is a triangle, not an icon) over pulling in an icon library.
+- **No Apple logo or wordmark is ever drawn.** This app has its own name and does not carry Apple
+  branding.

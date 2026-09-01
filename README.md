@@ -40,7 +40,7 @@ npm install && npm run dev
 ### Tests
 
 ```bash
-cd solver && .venv/bin/python -m pytest      # 14 tests, ~3s
+cd solver && .venv/bin/python -m pytest      # 51 tests, ~10 min
 ```
 
 ---
@@ -48,11 +48,11 @@ cd solver && .venv/bin/python -m pytest      # 14 tests, ~3s
 ## Demo flow
 
 1. **Load an example** (top right) — two datasets, both modelling **Факултет "Полиция" of
-   Академия на МВР** on a Mon–Fri × 6-period grid:
+   Академия на МВР**, on a Mon–Fri × 6-period template expanded across real semester dates:
 
    | | Contents | Behaviour |
    |---|---|---|
-   | **Small example** | 6 instructors, 8 rooms, 3 groups, 12 subjects, 21 sessions | `OPTIMAL` in ~0.6 s, with 2 unavoidable preference misses — start here |
+   | **Small example** | 6 instructors, 8 rooms, 3 groups, 12 subjects, 21 sessions | `OPTIMAL` in ~4 s: all four rank tiers settled, every teacher gets their slots and their first-choice rooms — start here |
    | **Full example** | 30 instructors, 22 rooms, 20 groups, 158 subjects, **170 sessions** | a genuinely hard instance; see below |
 
    The small one is the better first click: it solves instantly, fits on screen, and still shows a
@@ -75,15 +75,13 @@ cd solver && .venv/bin/python -m pytest      # 14 tests, ~3s
      from solving; block enough and the problem becomes impossible. Block just a few and watch the
      soft penalty rise instead — Sgt. Bergstrom prefers period-1 slots, so blocking that row costs
      3 preference violations and the cards get a dashed edge and an amber marker.
-5. **Tinker** — the *Settings* button on the Generate tab opens the solver settings dialog. Two
-   demonstrations worth a minute each, both on the **small example**:
-   - **Gap weight.** The default timetable has visible holes — a group sitting 1st, 2nd and then 6th
-     period — because its morning and late instructors both got the slots they asked for, and a hole
-     is cheaper than a broken preference. Raise *Gap weight* to 10, press Generate, and the days
-     compact to zero gaps while three preferences get traded away instead. One knob, both halves of
-     the objective visible.
-   - **Stop at first solution.** Returns a legal-but-bad timetable instead of the optimum — on the
-     full example, a penalty in the hundreds against 0.
+5. **Tinker** — the *Settings* button on the Generate tab opens the solver settings dialog.
+   - **Stop at first solution.** Returns a legal-but-bad timetable instead of the optimum. On the
+     small example: penalty 182 in 0.8 s, against 12 in ~4 s.
+   - **Priority.** Open *Data setup → Teachers*, give a junior instructor a *Priority weight* above
+     a senior one's, and re-generate: the ladder reorders and the contested room changes hands. The
+     ladder panel on the Generate tab shows each rank in turn and what it had to give up.
+   - **Gap weight** is deliberately *not* a demonstration any more — see the table below for why.
 6. Every successful solve is **re-checked independently** of the model (`validate_assignments`) and the
    result shown as *All hard rules verified*. That badge is what makes "the solver produced a valid
    timetable" a claim you can check rather than trust.
@@ -101,9 +99,10 @@ plain-language explanation on hover or keyboard focus — no CP-SAT vocabulary r
 | Setting | Effect on the seed dataset |
 |---|---|
 | Time limit | **Default 30 s**, ceiling 20 min. The full seed is hard enough to use every second it is given, so this one binds — more time buys a better objective, not a faster answer. |
-| Teacher preference weight (default 10) | With the Period 1 row blocked: `pref=1, gap=10` gives 4 preference misses but **0 gaps**, against 3 misses / 2 gaps at the defaults — the trade-off flips. |
-| Gap weight (default 1) | The clearest knob in the app. On the **small example** the default leaves **12 gap units across 3 split days** and breaks no preferences; raise it to **10** and the days compact to **zero gaps**, paid for with **3** teacher preferences. Set it to `0` and the solver stops caring about compact days entirely. |
-| Stop at first solution | **FEASIBLE at a penalty of roughly 115-140** (a dozen or so preference misses) instead of OPTIMAL at 0. The exact number moves run to run, since which worker finds the first solution is a matter of timing. The clearest demonstration of what optimising buys — the first legal timetable is bad, and polishing it takes ~30 ms. |
+| Teacher preference weight (default 10) | Cost of a session outside a teacher's preferred slots. It trades against the room weight *within* a rank; it cannot trade across ranks. |
+| Room preference weight (default 5) | Cost per place down a teacher's ranked room list, scored per room type. Below the slot weight, so when both cannot be met the slot is the one kept. |
+| Gap weight (default 1) | **No longer a trade-off knob**, and the change is worth understanding: group gaps are the last rung of the priority ladder, so by the time they are considered every teacher rank is frozen at its best. On the small example the default gives **12 gap units**, and raising it to **10** gives the same 12 — it only scales the number, because nothing is left to trade against. Set it to `0` to stop reporting them. |
+| Stop at first solution | Collapses the ladder to one un-optimised solve. On the small example: **FEASIBLE at penalty 182** (17 preference misses, 5 room cost, 7 gaps) in **0.8 s**, against **OPTIMAL at 12** in ~4 s. The clearest demonstration of what optimising buys. |
 
 **B · Search** (collapsed by default) — same answer, different amount of work:
 
@@ -123,7 +122,8 @@ the whitelist: there is no passthrough of arbitrary solver proto fields.
 
 ## The model
 
-**Decision variables.** Each subject with `sessionsPerWeek = n` expands into `n` session instances.
+**Decision variables.** Each subject expands into one session instance per session it runs that
+semester, and each lands on a real date.
 A subject names a *set* of acceptable room types and a *pool* of candidate teachers, so when, where
 and who are all decisions. There is one boolean per `(session, slot, room, teacher)` quadruple:
 
@@ -144,7 +144,7 @@ free to give two sessions of the same subject to different candidates.
 
 | Requirement | Encoding |
 |---|---|
-| Each subject scheduled exactly `sessionsPerWeek` times | `AddExactlyOne` per session instance |
+| Each subject scheduled exactly its semester total | `AddExactlyOne` per session instance |
 | Exactly one teacher per session, drawn from the subject's pool | implied by the same `AddExactlyOne` — no separate constraint |
 | No teacher teaches two sessions in one slot | `AddAtMostOne` per (teacher, slot), keyed on the literal's own candidate |
 | No group attends two sessions in one slot (all groups of a multi-group subject are busy) | `AddAtMostOne` per (group, slot) |
@@ -154,18 +154,89 @@ free to give two sessions of the same subject to different candidates.
 
 Sessions of the same subject are interchangeable, so a `slot_index` integer is channelled from the
 booleans and forced strictly increasing across a subject's sessions — symmetry breaking that keeps the
-search from re-exploring permutations of the same schedule.
+search from re-exploring permutations of the same schedule. It earns much more here than it did over
+a single week, and it does double duty: together with the even-spread constraint it pins session *k* to
+a narrow band of weeks, which is applied when the variables are built rather than only as a constraint.
+That pruning is what makes a semester affordable — on the full seed it is the difference between
+~718,000 booleans and roughly ten million.
 
-**Soft constraints (minimised)**
+**Even spread.** Each subject's sessions are distributed across the teaching weeks of its window, every
+week carrying between `floor(N/W)` and `ceil(N/W)` of them. This is what "spread evenly" means once
+sessions are dated, and being hard it can make a problem infeasible — `diagnostics.py` names the
+subject when it does.
 
-- Teacher preference: a session outside its teacher's `preferredSlots` costs `PREFERENCE_WEIGHT = 10`.
-  Teachers with no stated preference cost nothing. Because *which* teacher is itself a decision, the
-  penalty is a property of the literal, not of the session — picking a candidate who likes that slot
-  is cheaper, and watching CP-SAT make that trade is half the point of the demo.
-- Group day-gaps: a free period with teaching on both sides of it, in the same group's day, costs
-  `GAP_WEIGHT = 1` — an order of magnitude below preferences, so a compact day never outbids one.
+**The calendar.** A timetable is generated for one **semester**, identified by academic year and
+index (`2025/2026`, semester 1). The *dates* are per group: each group carries its own start and end
+for a semester, plus any breaks, so two cohorts can run the same term on different calendars. The
+weekday × period template defines which periods exist and `blockedSlots` still blocks a period on that
+weekday *every* week; the frontend expands that template across the semester's real dates, and slots
+falling on a break simply do not exist.
 
-**Search.** `max_time_in_seconds` is always set. It defaults to the 20-minute ceiling
+A subject declares a **total for the semester** rather than a weekly rate — sessions land on real
+dates, so nothing has to divide evenly — and whether they spread across the whole term or across a
+period chosen inside it. It also declares **which groups attend, per semester**: the cohort lives on
+the semester entry, not on the subject, so the same subject can run for one set of groups in the
+autumn and another in the spring. Sessions may only use dates on which **every** one of that
+semester's groups is in term: the intersection, because a multi-group session busies all of them at
+once.
+
+**Soft constraints, and the priority ladder**
+
+Teachers carry an academic rank (`role`), and rank decides who wins a contested slot or room. This is
+**not** a weighted trade-off: the solver optimises one rank at a time, highest first, and freezes each
+rank's result before the next one bargains. A професор's preference is never sold to satisfy any
+number of асистенти — a guarantee no choice of weights can express.
+
+- **Rank → tier.** Ranks are **data, not code**: a request carries a `roles` array of
+  `{id, name, short, weight}`, edited under *Data setup → Roles*, so a faculty can name the ranks it
+  actually has and decide what outranks what. The weights are *tier keys, not multipliers*: only
+  their ordering and which ranks share a value matter, and ranks sharing a weight share a tier and
+  trade freely with each other. `priorityWeight` on a teacher overrides their rank's weight, and is
+  the only way to move one person without inventing a rank for them. A teacher with no rank — or one
+  naming a rank that has since been deleted — shares the bottom tier, so a problem with no roles at
+  all behaves exactly as it did before the ladder existed.
+
+  A request that omits `roles` falls back to the six Bulgarian ranks in `DEFAULT_ROLES`
+  (`solver/app/models.py`), whose ids are the values the old fixed enum used — so every existing
+  caller keeps its ranking without changing anything.
+- **Slot preference:** a session outside its teacher's `preferredSlots` costs `preferenceWeight = 10`.
+  Because *which* teacher is itself a decision, the penalty is a property of the literal, not of the
+  session — picking a candidate who likes that slot is cheaper.
+- **Room preference:** `preferredRooms` is **ranked** — first choice free, each place further down
+  costs `roomPreferenceWeight = 5` again, and a room not on the list costs one step worse than the
+  last named choice. Ranking is scored **per room type**: which types a session may use is a hard
+  constraint, so ranking two полигона says nothing about which стрелбище you get, and a teacher is
+  never billed for a type they expressed no opinion about. An empty list can never be violated.
+- **Group day-gaps:** a free period with teaching on both sides of it, in the same group's day, costs
+  `gapWeight = 1`. This is the **last rung**, after every teacher rank. A consequence worth stating:
+  `gapWeight` can no longer buy a compact day at the price of a teacher preference, because by the
+  time gaps are considered every teacher tier is already frozen. It orders solutions within the gap
+  stage only.
+
+**Search.** The ladder runs as a sequence of solves against one model: a warm-up with no objective at
+all (which returns the instant it finds any legal timetable), then one phase per rank, then gaps. Each
+phase sets its own objective, and freezes the result with `Add(expr <= achieved)` before the next
+begins — a bound taken from a solution that demonstrably exists, so the model can never be made
+infeasible by its own ladder.
+
+The warm-up is deliberately **not** rationed: a run has to *have* a timetable before optimising one
+means anything, and once it has one every later rung can only improve on it. That is what guarantees a
+solve always returns the best timetable it found, however little time it was given.
+
+Each rung then gets an even share of what is left, floored at the warm-up's own measured cost — the
+best available estimate of what this model's presolve costs, since a rung given less than that spends
+its whole slice in presolve and returns `UNKNOWN` having never searched. When the remaining budget
+cannot afford another real rung the ladder stops there, which starves the *junior* ranks: the right
+way round. Rungs that never ran are reported as `NOT REACHED` rather than being passed off as
+satisfied, and a rung that hit its limit at `FEASIBLE` says so — the ranks below it were frozen
+against a number it might have improved on, and that is exactly the situation the ladder exists to
+prevent, so it is surfaced rather than buried.
+
+On the four-year seed, presolve alone is ~6s and finding a first timetable ~6s, so a 30s budget
+settles the top rank or two and leaves the rest `NOT REACHED`; more time settles more of them. The
+small example finishes the whole ladder in ~3s.
+
+`max_time_in_seconds` is always set. It defaults to the 20-minute ceiling
 (`MAX_SOLVE_SECONDS` in `solver/app/models.py`), so a solve runs as long as it needs to and answers
 the moment it finishes; the Generate tab offers 10 s / 1 min / 20 min presets and a free-form box, and
 the API rejects anything above the ceiling. The cap exists because CP-SAT can take unbounded time to
@@ -197,9 +268,11 @@ the full requirement:
   room for the whole group set.
 - **No co-teaching** — a subject's teacher list is a pool of candidates, exactly one of whom takes
   each session. There is no way to say "both of these instructors attend together".
-- **No multi-semester or multi-week** — one representative week, one semester.
+- **No cross-semester optimisation** — semesters are generated one at a time and stored separately;
+  the solver never balances one term against another.
 - **No teacher hard availability** — a teacher's unavailability can only be expressed globally, by
-  blocking a slot for everyone; per-teacher preferences are soft.
+  blocking a slot for everyone. Per-teacher preferences are soft, and stay soft however senior the
+  teacher: rank decides who wins a contested slot or room, never whether the session happens.
 - **No session length or double-period blocking** — every session is exactly one period.
 - **No room adjacency, travel time, or building constraints.**
 - **No persistence** — state lives in the browser and is POSTed in full on every solve.

@@ -126,6 +126,80 @@ a:hover { color: var(--color-primary-focus); }
   font-size: 12px; padding: 5px 11px; border-radius: 9999px; background: #fff; color: var(--color-ink);
 }
 .chip--active { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+/* A group that is not in term for the semester the chip row belongs to. Shown
+   rather than hidden, so it is clear the group exists and why it is unavailable. */
+/* Same values as a disabled dropdown trigger. Dashed edges mean soft conflict
+   and blocked slots in this design; they do not mean "disabled". */
+.chip--disabled { cursor: not-allowed; background: var(--color-canvas-parchment); color: #a1a1a6; }
+
+/* A chip that reports rather than toggles -- used for the read-only ranked room
+   list in the teachers table. */
+.chip--static { cursor: default; background: #f7f7f8; color: #6e6e73; }
+
+/* ---------- dropdown ---------- */
+/* Single choice. Transcribed from the design project's component-set screen --
+   see frontend/DESIGN.md. A button plus a hairline panel, never a native
+   <select>, whose option list the OS draws and the design cannot reach.
+   No shadow anywhere: the system has exactly one and it is for photography. */
+.dd { position: relative; }
+.dd__trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; box-sizing: border-box; text-align: left;
+  font: inherit; font-size: 14px; padding: 9px 12px; border-radius: 10px;
+  background: #fff; color: var(--color-ink);
+  border: 1px solid rgba(0,0,0,.14); cursor: pointer;
+}
+.dd__trigger--open { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(0,102,204,.16); }
+.dd__trigger:focus-visible { outline: none; border-color: var(--color-primary); }
+.dd__trigger:disabled { background: var(--color-canvas-parchment); color: #a1a1a6; cursor: not-allowed; }
+.dd__trigger--sm { font-size: 13px; padding: 6px 10px; border-radius: 8px; }
+.dd__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A triangle, not a glyph: the design system ships no icon set. */
+.dd__caret {
+  flex: none; width: 0; height: 0;
+  border-left: 4px solid transparent; border-right: 4px solid transparent;
+  border-top: 5px solid #6e6e73;
+}
+.dd__caret--up { border-top: none; border-bottom: 5px solid var(--color-primary); }
+.dd__caret--muted { border-top-color: rgba(0,0,0,.3); }
+
+/* Portalled and fixed rather than absolute -- the modal scrolls and would clip
+   a panel belonging to a field low in the form. Geometry is the mock's. */
+.dd__menu {
+  position: fixed; z-index: 70;
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 5px; border-radius: 12px;
+  background: #fff; border: 1px solid rgba(0,0,0,.08);
+  max-height: min(320px, 60vh); overflow-y: auto;
+}
+.dd__option {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; font-size: 13.5px; cursor: pointer;
+  color: var(--color-ink); white-space: nowrap;
+}
+.dd__option--sm { font-size: 13px; padding: 7px 9px; }
+.dd__option--active { background: #f5f5f7; }
+.dd__option--selected { background: #e9f1fb; color: #0a4f9e; font-weight: 600; }
+.dd__option--selected.dd__option--active { background: #ddeafa; }
+.dd__option[aria-disabled] { color: #a1a1a6; cursor: not-allowed; background: transparent; }
+.dd__mark { font-size: 12px; font-weight: 600; color: var(--color-primary); }
+
+/* Ranked room preference: the order is the data, so the chosen rooms are a
+   numbered, reorderable list rather than an unordered set of toggles. */
+.rankedrooms { display: flex; flex-direction: column; gap: 8px; }
+.rankedrooms__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.rankedrooms__item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 9px; border-radius: 8px; background: #f7f7f8;
+}
+.rankedrooms__rank { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--color-primary); min-width: 24px; }
+.rankedrooms__name { flex: 1; font-weight: 500; }
+.rankedrooms__actions { display: flex; gap: 2px; }
+.rankedrooms__actions .linkbtn[disabled] { opacity: .3; cursor: default; }
+
+/* The priority ladder readout on the Generate tab. */
+.ladder .data-table { margin-top: 6px; }
 
 .microbtn {
   border: none; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
@@ -185,6 +259,7 @@ table.data-table { width: 100%; border-collapse: collapse; min-width: 620px; }
   border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; background: #fafafc;
 }
 .data-table th.right, .data-table td.right { text-align: right; white-space: nowrap; }
+.data-table th.center, .data-table td.center { text-align: center; }
 .data-table td { padding: 12px 20px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #6e6e73; }
 .data-table td.name { font-size: 14px; font-weight: 600; color: var(--color-ink); }
 .data-table td.num { font-size: 14px; color: var(--color-ink); font-variant-numeric: tabular-nums; }
@@ -272,6 +347,14 @@ table.data-table { width: 100%; border-collapse: collapse; min-width: 620px; }
 }
 .sesscard--soft { border-top: 1px dashed rgba(177,86,15,.55); border-right: 1px dashed rgba(177,86,15,.55); border-bottom: 1px dashed rgba(177,86,15,.55); }
 .sesscard--selected { background: #fff !important; box-shadow: 0 0 0 2px var(--color-primary); }
+/* The overflow affordance for a cell with more sessions than it can show. A
+   control rather than a session, so it takes no subject tint and no colour
+   spine -- it must not read as one more session card. */
+.sesscard--more {
+  background: var(--color-canvas-parchment); color: #6e6e73;
+  border-left-width: 1px; border-color: rgba(0,0,0,.08);
+  font-size: 12px; font-weight: 600; text-align: center; padding: 7px 9px;
+}
 .sesscard__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
 .sesscard__subject { font-size: 12.5px; font-weight: 600; line-height: 1.25; letter-spacing: -.005em; min-width: 0; overflow-wrap: anywhere; }
 .sesscard__flag {
@@ -302,6 +385,21 @@ table.data-table { width: 100%; border-collapse: collapse; min-width: 620px; }
   width: 100%; max-width: 520px; max-height: 86vh; overflow-y: auto;
   background: #fff; border-radius: 18px; border: 1px solid rgba(0,0,0,.06);
 }
+/* A constant-height dialog: the box is the same whether it lists three sessions
+   or thirty, and the list inside it is what scrolls. `overflow: hidden` here is
+   what hands scrolling to .modal__scroll. */
+.modal--fixed {
+  height: 520px; max-height: 86vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.modal__scroll {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 0 20px 20px; display: flex; flex-direction: column; gap: 6px;
+}
+/* Without this a flex column squashes its children to fit instead of
+   overflowing, and a long list silently compresses rather than scrolling. */
+.modal__scroll > * { flex: none; }
+
 .modal__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px 12px; }
 .modal__body { padding: 0 20px 4px; display: flex; flex-direction: column; gap: 16px; }
 .modal__foot { display: flex; gap: 8px; padding: 16px 20px 20px; }
@@ -309,11 +407,11 @@ table.data-table { width: 100%; border-collapse: collapse; min-width: 620px; }
 .field__label { font-size: 12px; font-weight: 600; }
 .field__soft { font-weight: 400; color: #a1a1a6; }
 .field__hint { font-size: 12px; line-height: 1.45; color: #86868b; }
-.field input, .field select {
+.field input {
   font: inherit; font-size: 14px; padding: 9px 12px; border-radius: 10px;
   border: 1px solid rgba(0,0,0,.12); background: #fff; color: var(--color-ink);
 }
-.field input:focus, .field select:focus { outline: none; border-color: var(--color-primary); }
+.field input:focus { outline: none; border-color: var(--color-primary); }
 .chiprow { display: flex; flex-wrap: wrap; gap: 6px; }
 .error { font-size: 12px; color: #9a2c2c; }
 
@@ -401,3 +499,31 @@ table.data-table { width: 100%; border-collapse: collapse; min-width: 620px; }
 /* Visibility is driven by React state, not CSS sibling selectors: the bubble is
    no longer a sibling once portaled, and state also covers tap and keyboard
    focus, which :focus-visible alone would miss. */
+
+/* Week navigation above the timetable grid. The grid shows one teaching week at
+   a time; a semester is far too wide to render as a single scrollable strip. */
+.weeknav {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 20px; border-top: 1px solid #e0e0e0; background: #fafafc;
+}
+.weeknav .microbtn[disabled] { opacity: .35; cursor: default; }
+
+/* Semester editors: one row per semester, breaks nested under it. */
+/* One semester of a subject in the subjects table: its session total followed by
+   the groups attending it that term. */
+.semcell { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.semcell + .semcell { margin-top: 4px; }
+.semcell__label { white-space: nowrap; }
+
+.semlist { display: flex; flex-direction: column; gap: 10px; }
+.semrow { padding: 10px; border-radius: 9px; background: #f7f7f8; display: flex;
+  flex-direction: column; gap: 8px; }
+.semrow__head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.semrow__head input[type="date"], .semrow__head input { font: inherit;
+  font-size: 13px; padding: 5px 8px; border-radius: 7px; border: 1px solid rgba(0,0,0,.12);
+  background: #fff; }
+.semrow__year { width: 104px; }
+.semrow__breaks { display: flex; flex-direction: column; gap: 6px; padding-left: 4px; }
+.semrow__break { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.semrow__break input { font: inherit; font-size: 12.5px; padding: 4px 7px; border-radius: 6px;
+  border: 1px solid rgba(0,0,0,.12); background: #fff; }

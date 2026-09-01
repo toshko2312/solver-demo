@@ -4,13 +4,14 @@ import { Button } from './ds/Button';
 import { SearchInput } from './ds/SearchInput';
 import { EntityFormModal, type Draft, type EntityKind } from './EntityFormModal';
 import { GroupsTable } from './tables/GroupsTable';
+import { RolesTable } from './tables/RolesTable';
 import { RoomsTable } from './tables/RoomsTable';
 import { SlotConfigPane } from './tables/SlotConfigPane';
 import { SubjectsTable } from './tables/SubjectsTable';
 import { TeachersTable } from './tables/TeachersTable';
 import { nextId } from '../seed';
 import { allSlots, openSlots } from '../slots';
-import type { Group, Problem, Room, Subject, Teacher } from '../types';
+import type { Group, Problem, Role, Room, Subject, Teacher } from '../types';
 
 type Section = EntityKind | 'slots';
 
@@ -20,6 +21,11 @@ interface Props {
 }
 
 const COPY: Record<Section, [string, string, string]> = {
+  roles: [
+    'Roles',
+    'Academic ranks, highest weight first. Rank decides whose preference wins a contested slot or room: the solver settles one tier at a time, top down, and never trades a senior preference away to satisfy a junior one. Ranks sharing a weight share a tier.',
+    'Add role',
+  ],
   teachers: [
     'Teachers',
     'Hard availability comes from blocked time slots; the grid below records soft preferences.',
@@ -49,6 +55,7 @@ export function DataScreen({ problem, onChange }: Props) {
   const [form, setForm] = useState<{ kind: EntityKind; draft: Draft; isNew: boolean } | null>(null);
 
   const counts: Record<Section, number> = {
+    roles: problem.roles.length,
     teachers: problem.teachers.length,
     rooms: problem.rooms.length,
     groups: problem.groups.length,
@@ -60,20 +67,40 @@ export function DataScreen({ problem, onChange }: Props) {
 
   const blankDraft = (kind: EntityKind): Draft => {
     switch (kind) {
+      case 'roles':
+        return { id: nextId('role', problem.roles), name: '', short: '', weight: 1 };
       case 'teachers':
-        return { id: nextId('t', problem.teachers), name: '', department: '', preferredSlots: [] };
+        return {
+          id: nextId('t', problem.teachers),
+          name: '',
+          department: '',
+          preferredSlots: [],
+          preferredRooms: [],
+          role: null,
+          priorityWeight: null,
+        };
       case 'rooms':
         return { id: nextId('r', problem.rooms), name: '', capacity: 30, type: 'lecture', building: '' };
       case 'groups':
-        return { id: nextId('g', problem.groups), name: '', size: 25, programme: '' };
+        return {
+          id: nextId('g', problem.groups),
+          name: '',
+          size: 25,
+          programme: '',
+          // A new group starts on the same calendar the others use, if there is
+          // one -- retyping term dates per group is the cost of per-group dates,
+          // and copying is the obvious mitigation.
+          semesters: problem.groups[0]
+            ? JSON.parse(JSON.stringify(problem.groups[0].semesters))
+            : [],
+        };
       case 'subjects':
         return {
           id: nextId('s', problem.subjects),
           name: '',
           allowedRoomTypes: ['lecture'],
-          sessionsPerWeek: 1,
+          semesters: [],
           teacherIds: problem.teachers[0] ? [problem.teachers[0].id] : [],
-          groupIds: [],
         };
     }
   };
@@ -112,8 +139,38 @@ export function DataScreen({ problem, onChange }: Props) {
     });
   };
 
+  const deleteRole = (id: string) => {
+    // Same shape as deleting a teacher or a group: name the knock-on effect, then
+    // cascade. Teachers keep their place in the timetable and simply fall to the
+    // bottom tier, which the ladder already handles -- so this never leaves the
+    // problem in a state the solver would reject.
+    const holders = problem.teachers.filter((t) => t.role === id);
+    if (
+      holders.length > 0 &&
+      !window.confirm(
+        `${holders.length} teacher(s) hold this rank and will become unranked, joining the bottom priority tier. Continue?`,
+      )
+    ) {
+      return;
+    }
+    onChange({
+      ...problem,
+      roles: problem.roles.filter((r) => r.id !== id),
+      teachers: problem.teachers.map((t) => (t.role === id ? { ...t, role: null } : t)),
+    });
+  };
+
   const deleteGroup = (id: string) => {
-    const orphaned = problem.subjects.filter((s) => s.groupIds.length === 1 && s.groupIds[0] === id);
+    // Groups live on the semester entries, so the cascade walks two levels: drop
+    // the group from every semester, drop a semester left with nobody in it, and
+    // only then is a subject with no semester left an orphan.
+    const strip = (s: Subject): Subject => ({
+      ...s,
+      semesters: s.semesters
+        .map((x) => ({ ...x, groupIds: x.groupIds.filter((g) => g !== id) }))
+        .filter((x) => x.groupIds.length > 0),
+    });
+    const orphaned = problem.subjects.filter((s) => strip(s).semesters.length === 0);
     if (
       orphaned.length > 0 &&
       !window.confirm(
@@ -125,9 +182,7 @@ export function DataScreen({ problem, onChange }: Props) {
     onChange({
       ...problem,
       groups: problem.groups.filter((g) => g.id !== id),
-      subjects: problem.subjects
-        .filter((s) => !(s.groupIds.length === 1 && s.groupIds[0] === id))
-        .map((s) => ({ ...s, groupIds: s.groupIds.filter((g) => g !== id) })),
+      subjects: problem.subjects.map(strip).filter((s) => s.semesters.length > 0),
     });
   };
 
@@ -151,7 +206,7 @@ export function DataScreen({ problem, onChange }: Props) {
     <div className="data">
       <nav className="sidebar">
         <div className="eyebrow sidebar__label">Input data</div>
-        {(['teachers', 'rooms', 'groups', 'subjects', 'slots'] as Section[]).map((key) => (
+        {(['roles', 'teachers', 'rooms', 'groups', 'subjects', 'slots'] as Section[]).map((key) => (
           <button
             key={key}
             className={`sidebar__item${section === key ? ' sidebar__item--active' : ''}`}
@@ -187,9 +242,20 @@ export function DataScreen({ problem, onChange }: Props) {
           </div>
         </div>
 
+        {section === 'roles' && (
+          <RolesTable
+            roles={problem.roles.filter((r) => matches(r.name) || matches(r.short))}
+            teachers={problem.teachers}
+            onEdit={(r: Role) => setForm({ kind: 'roles', draft: r, isNew: false })}
+            onDelete={deleteRole}
+          />
+        )}
+
         {section === 'teachers' && (
           <TeachersTable
             teachers={problem.teachers.filter((t) => matches(t.name))}
+            roles={problem.roles}
+            rooms={problem.rooms}
             slotConfig={problem.slotConfig}
             totalSlots={allSlots(problem.slotConfig).length}
             onTogglePreference={togglePreference}

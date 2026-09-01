@@ -1,17 +1,75 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from './ds/Button';
+import { Select } from './ds/Select';
 import { ROOM_TYPES, ROOM_TYPE_COLOR, ROOM_TYPE_LABEL, subjectColor } from '../theme';
-import { periodTime, slotId, slotLabel } from '../slots';
-import type { Assignment, Lens, Problem, RunState, SolveResponse } from '../types';
+import type { Swatch } from '../theme';
+import { periodTime, semesterWeeks, slotId, slotLabel, weekdayName } from '../slots';
+import { semesterKey } from '../types';
+import type {
+  Assignment,
+  Lens,
+  Problem,
+  RunState,
+  SemesterRef,
+  SolveResponse,
+} from '../types';
 
 interface Props {
   problem: Problem;
+  semester: SemesterRef | null;
+  semesters: SemesterRef[];
+  results: Record<string, SolveResponse>;
+  onPickSemester: (next: SemesterRef) => void;
   run: RunState;
   result: SolveResponse | null;
   onGenerate: () => void;
   onGoData: () => void;
   onGoGenerate: () => void;
+}
+
+/** How many session cards a grid cell shows before the rest collapse into a
+ *  single "+N more" card. The same in both densities: how much the grid hides
+ *  should not depend on a display toggle. */
+const SHOWN_PER_CELL = 2;
+
+/** Identity of one placed session. The slot carries the date, so this is unique
+ *  across the whole semester, not just the week on screen. */
+function sessionKey(a: Assignment): string {
+  return `${a.subjectId}-${a.slot}`;
+}
+
+/** One placed session. Rendered in the grid cell and, for the sessions a full
+ *  cell cannot show, in the overflow dialog -- the same card in both, so a
+ *  session does not change appearance depending on where it is read. */
+function SessionCard({
+  assignment: a,
+  color,
+  selected,
+  onClick,
+}: {
+  assignment: Assignment;
+  color: Swatch;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={`sesscard${a.softViolated ? ' sesscard--soft' : ''}${
+        selected ? ' sesscard--selected' : ''
+      }`}
+      style={{ background: color.tint, borderLeftColor: color.c }}
+      onClick={onClick}
+    >
+      <div className="sesscard__top">
+        <span className="sesscard__subject">{a.subjectName}</span>
+        {a.softViolated && <span className="sesscard__flag" title={a.softReason ?? ''} />}
+      </div>
+      <div className="sesscard__teacher">{a.teacherName}</div>
+      <div className="sesscard__group">{a.groupNames.join(' · ')}</div>
+      <div className="sesscard__room">{a.roomName}</div>
+    </button>
+  );
 }
 
 /** The three lenses filter one shared `assignments` array -- there is no
@@ -23,7 +81,7 @@ function matchesLens(a: Assignment, lens: Lens, pick: string): boolean {
   return a.roomId === pick;
 }
 
-export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoGenerate }: Props) {
+export function ResultScreen({ problem, semester, semesters, results, onPickSemester, run, result, onGenerate, onGoData, onGoGenerate }: Props) {
   const [lens, setLens] = useState<Lens>('group');
   // A faculty-sized timetable is unreadable with every group shown at once, so
   // large results open focused on a single group instead of "All".
@@ -33,6 +91,30 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
   const [colorBy, setColorBy] = useState<'subject' | 'roomType'>('subject');
   const [dense, setDense] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  // Slot id whose overflow dialog is open. A cell shows at most SHOWN_PER_CELL
+  // cards; everything past that is only reachable through here.
+  const [overflow, setOverflow] = useState<string | null>(null);
+  // Which teaching week the grid is showing. Reset whenever the semester changes,
+  // since week 12 of one term means nothing in another.
+  const [weekIndex, setWeekIndex] = useState(0);
+
+  // A transient viewer, so it closes on Escape. The entity modals do not, and
+  // are deliberately left alone.
+  useEffect(() => {
+    if (!overflow) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOverflow(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [overflow]);
+
+  const weeks = useMemo(
+    () => (semester ? semesterWeeks(problem.slotConfig, problem.groups, semester) : []),
+    [problem.slotConfig, problem.groups, semester],
+  );
+  const week = weeks[Math.min(weekIndex, Math.max(weeks.length - 1, 0))];
+  const weekDates = week?.dates ?? [];
 
   const assignments = result?.assignments ?? [];
   const subjectIds = problem.subjects.map((s) => s.id);
@@ -65,21 +147,21 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
           .map((s) => ({ label: s.name, c: subjectColor(subjectIds, s.id).c }));
 
   const exportCsv = () => {
-    const header = 'day,period,subject,teacher,groups,room,soft_preference_violated';
+    const header =
+      'date,day,period,subject,teacher,groups,room,soft_preference_violated,room_choice_rank';
     const rows = [...assignments]
       .sort((a, b) => a.slot.localeCompare(b.slot))
       .map((a) => {
-        const slot = problem.slotConfig.days.flatMap((day) =>
-          Array.from({ length: problem.slotConfig.periods }, (_, i) => ({ day, period: i + 1 })),
-        ).find((s) => slotId(s.day, s.period) === a.slot);
         return [
-          slot?.day ?? a.slot,
-          slot?.period ?? '',
+          a.date,
+          weekdayName(a.date),
+          a.slot.slice(a.date.length + 1),
           a.subjectName,
           a.teacherName,
           a.groupNames.join(' + '),
           a.roomName,
           a.softViolated ? 'yes' : 'no',
+          a.roomPreferenceRank == null ? '' : a.roomPreferenceRank + 1,
         ]
           .map((v) => `"${String(v).replace(/"/g, '""')}"`)
           .join(',');
@@ -125,8 +207,20 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
     );
   }
 
-  const columns = `96px repeat(${problem.slotConfig.days.length}, minmax(0,1fr))`;
-  const selectedAssignment = assignments.find((a) => `${a.subjectId}-${a.slot}` === selected) ?? null;
+  const columns = `96px repeat(${Math.max(weekDates.length, 1)}, minmax(0,1fr))`;
+  // Read off `visible`, not off a copy taken when the card was clicked, so the
+  // dialog can never disagree with the cell it came from.
+  const overflowSessions = (() => {
+    if (!overflow) return null;
+    const date = overflow.slice(0, 10);
+    const period = Number(overflow.slice(11));
+    return {
+      title: `${weekdayName(date)} ${date.slice(8, 10)}/${date.slice(5, 7)} · Period ${period}`,
+      time: periodTime(problem.slotConfig, period),
+      items: visible.filter((a) => a.slot === overflow),
+    };
+  })();
+  const selectedAssignment = assignments.find((a) => sessionKey(a) === selected) ?? null;
   const stats = result.stats!;
 
   return (
@@ -166,6 +260,31 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          {semesters.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="muted-sm">
+              <span>Semester</span>
+              <Select
+                size="sm"
+                aria-label="Semester"
+                value={semester ? semesterKey(semester) : ''}
+                options={semesters.map((x) => ({
+                  value: semesterKey(x),
+                  label:
+                    `${x.academicYear} · Semester ${x.index}` +
+                    (results[semesterKey(x)] ? '' : ' (not generated)'),
+                }))}
+                onChange={(key) => {
+                  const next = semesters.find((x) => semesterKey(x) === key);
+                  if (next) {
+                    onPickSemester(next);
+                    setWeekIndex(0);
+                    setSelected(null);
+                    setOverflow(null);
+                  }
+                }}
+              />
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="muted-sm">
             <span>Colour by</span>
             <button
@@ -221,11 +340,48 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
             </div>
           </div>
 
+          {weeks.length > 0 && (
+            <div className="weeknav">
+              <button
+                className="microbtn"
+                disabled={weekIndex <= 0}
+                onClick={() => setWeekIndex((i) => Math.max(i - 1, 0))}
+              >
+                ‹ Previous
+              </button>
+              <Select
+                size="sm"
+                aria-label="Week"
+                value={week?.week ?? ''}
+                options={weeks.map((w, i) => ({
+                  value: w.week,
+                  label: `Week ${i + 1} of ${weeks.length} · ${w.dates[0]} – ${
+                    w.dates[w.dates.length - 1]
+                  }`,
+                }))}
+                onChange={(key) => setWeekIndex(weeks.findIndex((w) => w.week === key))}
+              />
+              <button
+                className="microbtn"
+                disabled={weekIndex >= weeks.length - 1}
+                onClick={() => setWeekIndex((i) => Math.min(i + 1, weeks.length - 1))}
+              >
+                Next ›
+              </button>
+              <span className="muted-sm">
+                {visible.filter((a) => weekDates.includes(a.date)).length} session(s) this week
+              </span>
+            </div>
+          )}
+
           <div className="grid__row grid__row--head" style={{ gridTemplateColumns: columns }}>
             <div className="grid__daycell" />
-            {problem.slotConfig.days.map((d) => (
+            {weekDates.map((d) => (
               <div key={d} className="grid__daycell">
-                {d}
+                {weekdayName(d)}{' '}
+                <span className="muted-sm">
+                  {d.slice(8, 10)}/{d.slice(5, 7)}
+                </span>
               </div>
             ))}
           </div>
@@ -236,40 +392,45 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
                 <div className="grid__periodname">Period {period}</div>
                 <div className="grid__periodtime">{periodTime(problem.slotConfig, period)}</div>
               </div>
-              {problem.slotConfig.days.map((day) => {
-                const id = slotId(day, period);
+              {weekDates.map((date) => {
+                const id = `${date}-${period}`;
                 const cell = visible.filter((a) => a.slot === id);
+                const hidden = cell.slice(SHOWN_PER_CELL);
+                // blockedSlots stays weekday-keyed, so a blocked period is blocked
+                // on that weekday every week of the term.
+                const isBlocked = blocked.has(slotId(weekdayName(date), period));
                 return (
                   <div
                     key={id}
-                    className={`grid__cell${blocked.has(id) ? ' grid__cell--blocked' : ''}`}
+                    className={`grid__cell${isBlocked ? ' grid__cell--blocked' : ''}`}
                     style={{ minHeight: dense ? 62 : 92 }}
                   >
-                    {cell.map((a) => {
-                      const key = `${a.subjectId}-${a.slot}`;
-                      const color = colorFor(a);
-                      const isSelected = selected === key;
+                    {cell.slice(0, SHOWN_PER_CELL).map((a) => {
+                      const key = sessionKey(a);
                       return (
-                        <button
+                        <SessionCard
                           key={key}
-                          className={`sesscard${a.softViolated ? ' sesscard--soft' : ''}${
-                            isSelected ? ' sesscard--selected' : ''
-                          }`}
-                          style={{ background: color.tint, borderLeftColor: color.c }}
-                          onClick={() => setSelected(isSelected ? null : key)}
-                        >
-                          <div className="sesscard__top">
-                            <span className="sesscard__subject">{a.subjectName}</span>
-                            {a.softViolated && (
-                              <span className="sesscard__flag" title={a.softReason ?? ''} />
-                            )}
-                          </div>
-                          <div className="sesscard__teacher">{a.teacherName}</div>
-                          <div className="sesscard__group">{a.groupNames.join(' · ')}</div>
-                          <div className="sesscard__room">{a.roomName}</div>
-                        </button>
+                          assignment={a}
+                          color={colorFor(a)}
+                          selected={selected === key}
+                          onClick={() => setSelected(selected === key ? null : key)}
+                        />
                       );
                     })}
+                    {hidden.length > 0 && (
+                      // Carries the selected ring when the chosen session is one
+                      // of the hidden ones, so a selection never looks lost.
+                      <button
+                        className={`sesscard sesscard--more${
+                          hidden.some((a) => sessionKey(a) === selected)
+                            ? ' sesscard--selected'
+                            : ''
+                        }`}
+                        onClick={() => setOverflow(id)}
+                      >
+                        + {hidden.length} more
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -316,6 +477,9 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
                 {selectedAssignment.softViolated && (
                   <div className="penalty">{selectedAssignment.softReason}</div>
                 )}
+                {selectedAssignment.roomPreferenceRank === 0 && (
+                  <div className="muted-sm">First-choice room for this teacher.</div>
+                )}
               </>
             ) : (
               <div className="muted-sm" style={{ marginTop: 10 }}>
@@ -332,6 +496,7 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
                 ['Solve time', `${stats.solveTimeSeconds.toFixed(2)} s`],
                 ['Soft penalty', String(stats.objectiveValue ?? 0)],
                 ['Preference misses', String(stats.preferenceViolations)],
+                ['Room preference cost', String(stats.roomPreferencePenalty)],
                 ['Group gaps', String(stats.gapPenalty)],
                 ['Sessions placed', `${stats.numPlaced} / ${stats.numSessions}`],
               ].map(([k, v]) => (
@@ -380,6 +545,50 @@ export function ResultScreen({ problem, run, result, onGenerate, onGoData, onGoG
           </div>
         </aside>
       </div>
+
+      {overflowSessions && (
+        <div className="modal__backdrop" onClick={() => setOverflow(null)}>
+          <div
+            className="modal modal--fixed"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={overflowSessions.title}
+          >
+            <div className="modal__head">
+              <div>
+                <div className="display-sm">{overflowSessions.title}</div>
+                <div className="muted-sm">
+                  {overflowSessions.time && `${overflowSessions.time} · `}
+                  {overflowSessions.items.length} session(s)
+                </div>
+              </div>
+              <button className="linkbtn linkbtn--quiet" onClick={() => setOverflow(null)}>
+                Close
+              </button>
+            </div>
+            {/* The shell is a fixed height whatever the count, so the list is
+                what scrolls -- a busy period and a quiet one open the same box. */}
+            <div className="modal__scroll">
+              {overflowSessions.items.map((a) => {
+                const key = sessionKey(a);
+                return (
+                  <SessionCard
+                    key={key}
+                    assignment={a}
+                    color={colorFor(a)}
+                    selected={selected === key}
+                    onClick={() => {
+                      setSelected(key);
+                      setOverflow(null);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

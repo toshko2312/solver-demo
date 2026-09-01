@@ -1,6 +1,6 @@
-import { openSlots } from './slots';
+import { semesterSlots } from './slots';
 import { defaultSettings } from './settings';
-import type { Problem, SolveResponse, SolverSettings } from './types';
+import type { Problem, SemesterRef, SolveResponse, SolverSettings } from './types';
 
 // Same-origin '/api' by default (Vite proxies it to the solver); override with
 // VITE_API_URL to talk to a solver on another host.
@@ -8,13 +8,17 @@ const BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 export async function solve(
   problem: Problem,
+  semester: SemesterRef,
   settings: SolverSettings = defaultSettings(),
 ): Promise<SolveResponse> {
   const response = await fetch(`${BASE}/solve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      slots: openSlots(problem.slotConfig),
+      semester,
+      // The weekday template expanded across this semester's real dates.
+      slots: semesterSlots(problem.slotConfig, problem.groups, semester),
+      roles: problem.roles,
       teachers: problem.teachers,
       rooms: problem.rooms,
       groups: problem.groups,
