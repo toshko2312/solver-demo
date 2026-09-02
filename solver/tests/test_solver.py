@@ -15,7 +15,6 @@ from pydantic import ValidationError
 from app.models import (
     DEFAULT_ROLES,
     DEFAULT_SOLVE_SECONDS,
-    MAX_SOLVE_SECONDS,
     UNRANKED_WEIGHT,
     SearchParams,
     SolveRequest,
@@ -335,19 +334,32 @@ def test_impossible_preferences_cost_penalty_but_stay_solvable(seed):
     assert result.stats.objectiveValue > 0
 
 
-def test_time_limit_defaults_below_the_ceiling_and_cannot_exceed_it(seed):
-    """A solve is bounded twice over: a default budget that keeps the demo
-    responsive, and a hard ceiling so no request can pin a worker thread for
-    long. The default is deliberately well under the ceiling -- a faculty-sized
-    timetable will use every second it is given without proving optimality."""
+def test_time_limit_defaults_to_a_demo_sized_budget(seed):
+    """A solve carries a default budget that keeps the demo responsive. There is
+    no ceiling: proving a faculty-sized timetable optimal takes longer than any
+    cap worth setting, so a caller may ask for as long as it wants -- or for no
+    limit at all."""
     request = SolveRequest(**{k: v for k, v in seed.items() if k != "maxTimeInSeconds"})
     assert request.maxTimeInSeconds == DEFAULT_SOLVE_SECONDS == 30
-    assert DEFAULT_SOLVE_SECONDS < MAX_SOLVE_SECONDS == 20 * 60
 
-    with pytest.raises(ValidationError):
-        SolveRequest(**dict(seed, maxTimeInSeconds=MAX_SOLVE_SECONDS + 1))
+    assert SolveRequest(**dict(seed, maxTimeInSeconds=10 * 60 * 60)).maxTimeInSeconds == 36000
     with pytest.raises(ValidationError):
         SolveRequest(**dict(seed, maxTimeInSeconds=0))
+
+
+def test_no_time_limit_runs_to_completion():
+    """maxTimeInSeconds=None means CP-SAT is given no deadline at all. Checked on
+    a problem small enough to finish instantly -- pointing an unlimited run at a
+    real instance is exactly what this suite must not do."""
+    payload = _dated("2025-09-15", "2025-09-19", total=2)
+    payload["maxTimeInSeconds"] = None
+    result = solve(payload)
+
+    assert result.status == "OPTIMAL", result.message
+    assert result.validation.ok, result.validation.errors
+    assert len(result.assignments) == 2
+    # The echo has to carry it, or the UI would show a budget the run never had.
+    assert result.settingsUsed.maxTimeInSeconds is None
 
 
 # --------------------------------------------------------------------------- #
@@ -1055,3 +1067,38 @@ def test_a_subject_can_be_taught_to_a_different_cohort_each_semester():
     # G1 is in term this semester too, and is deliberately *not* scheduled: the
     # cohort comes from the semester entry, not from the subject.
     assert {gid for a in spring.assignments for gid in a.groupIds} == {"g2"}
+
+
+def test_progress_events_report_the_ladder_without_changing_the_answer():
+    """The streaming endpoint's hook is instrumentation, not a second code path.
+
+    It reports the milestones the run already passes -- the model being built,
+    then each rung starting and settling -- and the answer must be identical to
+    the same request solved with no hook at all.
+    """
+    payload = _dated("2025-09-15", "2025-10-10", total=4)
+    events = []
+    plain = solve_timetable(SolveRequest(**dict(payload, maxTimeInSeconds=20.0)))
+    watched = solve_timetable(
+        SolveRequest(**dict(payload, maxTimeInSeconds=20.0)), events.append
+    )
+
+    assert watched.status == plain.status
+    assert watched.stats.objectiveValue == plain.stats.objectiveValue
+    assert len(watched.assignments) == len(plain.assignments)
+
+    kinds = [e["type"] for e in events]
+    assert kinds[0] == "building"
+    assert kinds[1] == "built"
+    assert "phase" in kinds and "phase_done" in kinds
+
+    built = events[1]
+    # Warm-up plus every rung, fixed before the first second of search -- this is
+    # what lets the UI draw a bar that only moves forwards.
+    assert built["total"] == 1 + len(built["phases"])
+
+    starts = [e for e in events if e["type"] == "phase"]
+    assert [e["index"] for e in starts] == list(range(1, len(starts) + 1))
+    assert starts[0]["label"] == "warmup"
+    for event in starts:
+        assert event["total"] == built["total"]

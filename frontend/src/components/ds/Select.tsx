@@ -83,9 +83,14 @@ export function Select<T extends string | number>({
     });
   }, []);
 
-  // Re-measure once the panel has a height, so a flip happens before it is seen.
+  // Re-measure once the panel has a height, so a flip happens before it is seen,
+  // and bring the current choice into view -- a list longer than the panel (24
+  // hours, or a semester's worth of weeks) otherwise opens showing its first row
+  // and reads as if nothing were selected.
   useLayoutEffect(() => {
-    if (open) place();
+    if (!open) return;
+    place();
+    menuRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
   }, [open, place]);
 
   useEffect(() => {
@@ -97,12 +102,18 @@ export function Select<T extends string | number>({
       setOpen(false);
     };
     // Capture, so a scroll inside the modal closes the panel too rather than
-    // leaving it stranded next to a field that has moved.
-    window.addEventListener('scroll', close, true);
+    // leaving it stranded next to a field that has moved. The panel's own scroll
+    // reaches this listener the same way and must not close it -- a long list is
+    // meant to be scrolled.
+    const onScroll = (e: Event) => {
+      if (menuRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    window.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', close);
     document.addEventListener('pointerdown', onPointerDown);
     return () => {
-      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', close);
       document.removeEventListener('pointerdown', onPointerDown);
     };

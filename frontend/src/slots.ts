@@ -41,6 +41,79 @@ export function periodTime(config: SlotConfig, period: number): string {
   return config.periodTimes[period - 1] ?? '';
 }
 
+// ---------------------------------------------------------------------------
+// Period clock times. Stored as the canonical 'HH:MM-HH:MM' string the seeds
+// already use, so nothing outside the editor -- or on the wire, which never sees
+// slotConfig at all -- has to know these are now structured values.
+// ---------------------------------------------------------------------------
+
+export interface PeriodSpan {
+  /** 'HH:MM', 24-hour. */
+  start: string;
+  end: string;
+}
+
+const SPAN = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
+
+/** Minutes since midnight. '09:45' -> 585. */
+export function minutesOf(hhmm: string): number {
+  const [h, m] = hhmm.split(':');
+  return Number(h) * 60 + Number(m);
+}
+
+/** The inverse, for deriving a new period from the one before it. */
+export function clockTime(minutes: number): string {
+  const clamped = Math.max(0, Math.min(24 * 60 - 1, Math.round(minutes)));
+  const h = Math.floor(clamped / 60);
+  return `${String(h).padStart(2, '0')}:${String(clamped - h * 60).padStart(2, '0')}`;
+}
+
+/** null for anything that is not 'HH:MM-HH:MM' -- a problem stored before times
+ *  were editable can hold free text, since 'Add period' used to write 'Period 7'. */
+export function parsePeriodTime(text: string): PeriodSpan | null {
+  const m = SPAN.exec(text.trim());
+  if (!m) return null;
+  const [, h1, m1, h2, m2] = m;
+  if (Number(h1) > 23 || Number(h2) > 23 || Number(m1) > 59 || Number(m2) > 59) return null;
+  return { start: `${h1.padStart(2, '0')}:${m1}`, end: `${h2.padStart(2, '0')}:${m2}` };
+}
+
+export function formatPeriodTime(span: PeriodSpan): string {
+  return `${span.start}-${span.end}`;
+}
+
+/** Why each period's times are unusable, keyed by period number.
+ *
+ *  Periods must not overlap, and must run in period *order*: the gap objective
+ *  in the solver treats consecutive period numbers as adjacent within a day, so
+ *  a Period 3 sitting earlier on the clock than Period 2 would compact the wrong
+ *  thing. Touching is not overlapping -- one period may end exactly when the next
+ *  begins. A row with no readable time is reported but never blamed on, or for,
+ *  its neighbours.
+ */
+export function periodTimeErrors(times: string[]): Map<number, string> {
+  const out = new Map<number, string>();
+  let prev: { period: number; span: PeriodSpan } | null = null;
+  for (let i = 0; i < times.length; i++) {
+    const period = i + 1;
+    const span = parsePeriodTime(times[i]);
+    if (!span) {
+      out.set(period, 'No time set.');
+      continue;
+    }
+    if (minutesOf(span.start) >= minutesOf(span.end)) {
+      out.set(period, `Period ${period} ends before it starts.`);
+    } else if (prev && minutesOf(span.start) < minutesOf(prev.span.end)) {
+      out.set(
+        period,
+        `Period ${period} must start at or after ${prev.span.end}, when Period ${prev.period} ends.`,
+      );
+    }
+    prev = { period, span };
+  }
+  return out;
+}
+
 export function slotLabel(config: SlotConfig, id: string): string {
   const slot = allSlots(config).find((s) => s.id === id);
   return slot ? `${slot.day} · Period ${slot.period}` : id;

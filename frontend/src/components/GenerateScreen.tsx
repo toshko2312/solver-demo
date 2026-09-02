@@ -1,20 +1,38 @@
-import { useEffect, useState } from 'react';
-
+import { Accordion } from './ds/Accordion';
 import { Button } from './ds/Button';
+import { RunDetails } from './RunDetails';
+import { RunProgress } from './RunProgress';
+import { StaleBanner } from './StaleBanner';
 import { Select } from './ds/Select';
 import { countNonDefault, formatLimit } from '../settings';
 import { semesterSlots, sessionsIn } from '../slots';
 import { semesterKey } from '../types';
-import type { Problem, RunState, SemesterRef, SolveResponse, SolverSettings } from '../types';
+import type {
+  Problem,
+  RunState,
+  SemesterRef,
+  SolveProgress,
+  SolveResponse,
+  SolverSettings,
+} from '../types';
 
 interface Props {
   problem: Problem;
   semester: SemesterRef | null;
   semesters: SemesterRef[];
   onPickSemester: (next: SemesterRef) => void;
+  /** Every semester's run state, result, live progress and start time: the screen
+   *  lists them all, not just the one on screen. */
+  runs: Record<string, RunState>;
+  results: Record<string, SolveResponse>;
+  progress: Record<string, SolveProgress>;
+  starts: Record<string, number>;
+  errors: Record<string, string | null>;
   run: RunState;
   result: SolveResponse | null;
   error: string | null;
+  /** This semester's timetable predates the current input data. */
+  stale: boolean;
   settings: SolverSettings;
   onOpenSettings: () => void;
   onGenerate: () => void;
@@ -27,26 +45,21 @@ export function GenerateScreen({
   semester,
   semesters,
   onPickSemester,
+  runs,
+  results,
+  progress,
+  starts,
+  errors,
   run,
   result,
   error,
+  stale,
   settings,
   onOpenSettings,
   onGenerate,
   onGoResult,
   onGoData,
 }: Props) {
-  // With no time limit a solve can run for a while; a ticking clock is the
-  // difference between "working" and "hung" as far as the user can tell.
-  const [elapsed, setElapsed] = useState(0);
-  useEffect(() => {
-    if (run !== 'solving') return;
-    setElapsed(0);
-    const started = Date.now();
-    const id = setInterval(() => setElapsed((Date.now() - started) / 1000), 100);
-    return () => clearInterval(id);
-  }, [run]);
-
   const changedCount = countNonDefault(settings);
   // The dated slots this semester actually has, not the weekday template's 30 --
   // a semester is weeks of them, and the template count would badly understate it.
@@ -56,11 +69,6 @@ export function GenerateScreen({
   const sessions = semester
     ? problem.subjects.reduce((n, s) => n + sessionsIn(s, semester), 0)
     : 0;
-  const stats = result?.stats ?? null;
-  // Always describe the run by the settings it was solved with, never by the ones
-  // currently on screen -- those may have been changed since.
-  const used = result?.settingsUsed ?? settings;
-
   const summary = [
     { value: problem.teachers.length, label: 'Teachers' },
     { value: problem.rooms.length, label: 'Rooms' },
@@ -70,23 +78,40 @@ export function GenerateScreen({
     { value: sessions, label: 'Sessions needed' },
   ];
 
-  const headline =
-    run === 'solving'
+  const headlineFor = (state: RunState, r: SolveResponse | null) =>
+    state === 'solving'
       ? 'Solving'
-      : run === 'solved'
-        ? result?.status === 'OPTIMAL'
+      : state === 'solved'
+        ? r?.status === 'OPTIMAL'
           ? 'Optimal'
           : 'Feasible'
-        : run === 'failed'
-          ? result?.status === 'MODEL_INVALID'
+        : state === 'failed'
+          ? r?.status === 'MODEL_INVALID'
             ? 'Invalid problem'
             : 'No solution found'
-          : run === 'error'
+          : state === 'error'
             ? 'Solver unreachable'
             : 'Idle';
 
+  const dotFor = (state: RunState) =>
+    state === 'solved'
+      ? 'statusdot--ok'
+      : state === 'failed' || state === 'error'
+        ? 'statusdot--fail'
+        : state === 'solving'
+          ? 'statusdot--busy'
+          : '';
+
+  // Every semester that has been run, or is running, in the order the calendar
+  // puts them. A run that is still going is listed alongside the finished ones,
+  // so a background solve is never off-screen.
+  const rows = semesters
+    .map((x) => ({ semester: x, key: semesterKey(x) }))
+    .filter(({ key }) => runs[key] !== undefined || results[key] !== undefined);
+
   return (
     <div className="screen gen">
+      {stale && <StaleBanner onRegenerate={onGenerate} />}
       <section className="card card--pad">
         <div className="gen__runrow">
           <div style={{ flex: '1 1 320px', minWidth: 0 }}>
@@ -134,7 +159,7 @@ export function GenerateScreen({
                 variant="primary"
                 large
                 onClick={onGenerate}
-                disabled={run === 'solving' || !semester}
+                disabled={run === 'solving' || !semester || sessions === 0}
               >
                 {run === 'solving' ? 'Solving…' : 'Generate timetable'}
               </Button>
@@ -144,8 +169,18 @@ export function GenerateScreen({
 
         {semester && (
           <div className="muted-sm" style={{ marginTop: 8 }}>
-            Generating replaces the timetable stored for {semester.academicYear} · Semester{' '}
-            {semester.index}. Other semesters are left as they are.
+            {sessions === 0 ? (
+              <>
+                No subject runs in {semester.academicYear} · Semester {semester.index}, so there is
+                nothing to schedule. Give a subject sessions in this semester under Data setup →
+                Subjects.
+              </>
+            ) : (
+              <>
+                Generating replaces the timetable stored for {semester.academicYear} · Semester{' '}
+                {semester.index}. Other semesters are left as they are.
+              </>
+            )}
           </div>
         )}
 
@@ -159,196 +194,67 @@ export function GenerateScreen({
         </div>
       </section>
 
-      <section className="card card--pad">
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-          <span
-            className={`statusdot ${
-              run === 'solved'
-                ? 'statusdot--ok'
-                : run === 'failed' || run === 'error'
-                  ? 'statusdot--fail'
-                  : run === 'solving'
-                    ? 'statusdot--busy'
-                    : ''
-            }`}
-          />
-          <span className="display-sm">{headline}</span>
-          <span className="muted-sm">{result?.message ?? error ?? 'No run in this session yet.'}</span>
+      {rows.length === 0 ? (
+        <section className="card card--pad">
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+            <span className="statusdot" />
+            <span className="display-sm">Idle</span>
+            <span className="muted-sm">No run in this session yet.</span>
+          </div>
+        </section>
+      ) : (
+        <div className="runlist">
+          {rows.map(({ semester: x, key }) => {
+            const rowRun = runs[key] ?? 'empty';
+            const rowResult = results[key] ?? null;
+            const rowProgress = progress[key] ?? null;
+            const isActive = semester !== null && semesterKey(semester) === key;
+            return (
+              <Accordion
+                key={key}
+                defaultOpen={isActive}
+                onToggle={(open) => open && !isActive && onPickSemester(x)}
+                title={
+                  <>
+                    <span className={`statusdot ${dotFor(rowRun)}`} style={{ marginRight: 8 }} />
+                    {x.academicYear} · Semester {x.index}
+                  </>
+                }
+                subtitle={
+                  <>
+                    {headlineFor(rowRun, rowResult)}
+                    {rowResult?.stats && rowRun === 'solved'
+                      ? ` · penalty ${rowResult.stats.objectiveValue ?? 0}`
+                      : ''}
+                    {rowRun === 'error' ? ` · ${errors[key] ?? ''}` : ''}
+                  </>
+                }
+                aside={
+                  rowRun === 'solving' ? (
+                    <RunProgress
+                      progress={rowProgress}
+                      startedAt={starts[key] ?? null}
+                      limit={settings.maxTimeInSeconds}
+                    />
+                  ) : null
+                }
+              >
+                <RunDetails
+                  run={rowRun}
+                  result={rowResult}
+                  error={errors[key] ?? null}
+                  used={rowResult?.settingsUsed ?? settings}
+                  onGoResult={() => {
+                    if (!isActive) onPickSemester(x);
+                    onGoResult();
+                  }}
+                  onGoData={onGoData}
+                />
+              </Accordion>
+            );
+          })}
         </div>
-
-        {run === 'solving' && (
-          <div style={{ marginTop: 16 }}>
-            <div className="sweep">
-              <div className="sweep__bar" />
-            </div>
-            <div className="muted-sm" style={{ marginTop: 10 }}>
-              CP-SAT is propagating hard constraints and minimising the soft penalty. The result
-              arrives as soon as the search finishes; if it hits the{' '}
-              {formatLimit(settings.maxTimeInSeconds)} limit first, the best schedule found so far is
-              returned.{' '}
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{elapsed.toFixed(1)}s elapsed</span>
-            </div>
-          </div>
-        )}
-
-        {run === 'error' && (
-          <div className="failbox" style={{ marginTop: 16 }}>
-            <div className="hint__title">Could not reach the solver service</div>
-            <div className="hint__detail">{error}</div>
-            <div className="hint__detail" style={{ marginTop: 6 }}>
-              Check that it is running on port 8000 (<code>curl localhost:8000/health</code>).
-            </div>
-          </div>
-        )}
-
-        {run === 'solved' && stats && (
-          <>
-            <div className="statgrid" style={{ marginTop: 16 }}>
-              <div className="statgrid__tile">
-                <div className="eyebrow">Time taken</div>
-                <div className="statgrid__value">{stats.solveTimeSeconds.toFixed(2)} s</div>
-                <div className="statgrid__note">
-                  limit {formatLimit(used.maxTimeInSeconds)} · {used.search.numWorkers}w ·{' '}
-                  {stats.numBooleanVariables} booleans
-                </div>
-              </div>
-              <div className="statgrid__tile">
-                <div className="eyebrow">Result</div>
-                <div className="statgrid__value">{stats.status}</div>
-                <div className="statgrid__note">
-                  {stats.status === 'OPTIMAL'
-                    ? 'Proven minimum penalty'
-                    : 'Best found in the time limit'}
-                </div>
-              </div>
-              <div className="statgrid__tile">
-                <div className="eyebrow">Soft penalty</div>
-                <div className="statgrid__value">{stats.objectiveValue ?? 0}</div>
-                <div className="statgrid__note">
-                  {stats.preferenceViolations} preference miss(es) · {stats.roomPreferencePenalty}{' '}
-                  room cost · {stats.gapPenalty} group gap(s)
-                </div>
-              </div>
-              <div className="statgrid__tile">
-                <div className="eyebrow">Sessions placed</div>
-                <div className="statgrid__value">
-                  {stats.numPlaced} / {stats.numSessions}
-                </div>
-                <div className="statgrid__note">across {stats.numSlots} open slots</div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <span className={`badge ${result?.validation?.ok ? 'badge--ok' : 'badge--bad'}`}>
-                {result?.validation?.ok
-                  ? 'Independent re-check: all hard rules hold'
-                  : 'Independent re-check FAILED'}
-              </span>
-              {stats.preferenceViolations > 0 && (
-                <span className="badge badge--warn">
-                  {stats.preferenceViolations} soft preference(s) not met
-                </span>
-              )}
-            </div>
-
-            {result?.validation && !result.validation.ok && (
-              <div className="failbox" style={{ marginTop: 14 }}>
-                {result.validation.errors.map((e) => (
-                  <div key={e} className="hint__detail">
-                    {e}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {stats.tiers.length > 0 && (
-              <div className="ladder" style={{ marginTop: 14 }}>
-                <div className="eyebrow">Priority ladder — highest rank settled first</div>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Rank</th>
-                      <th className="right">Teachers</th>
-                      <th className="right">Penalty</th>
-                      <th>Outcome</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.tiers.map((tier) => (
-                      <tr key={tier.weight}>
-                        <td className="name">
-                          {tier.roles.length > 0 ? tier.roles.join(' · ') : 'unranked'}{' '}
-                          <span className="muted-sm">w{tier.weight}</span>
-                        </td>
-                        <td className="right">{tier.teacherCount}</td>
-                        <td className="right">{tier.penalty}</td>
-                        <td>
-                          {tier.status === 'OPTIMAL' ? (
-                            <span className="muted-sm">best possible · {tier.solveTimeSeconds}s</span>
-                          ) : (
-                            <span className="badge badge--warn">
-                              {tier.status} — ran out of time, so the ranks below it were held to a
-                              number this one might have improved on
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {result && result.assignments.some((a) => a.softViolated) && (
-              <div className="penalty">
-                {result.assignments
-                  .filter((a) => a.softViolated)
-                  .map((a) => (
-                    <div key={`${a.subjectId}-${a.slot}`} style={{ marginBottom: 4 }}>
-                      <strong>{a.teacherName}</strong> — {a.softReason}
-                    </div>
-                  ))}
-              </div>
-            )}
-
-            <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button variant="primary" onClick={onGoResult}>
-                View timetable
-              </Button>
-            </div>
-          </>
-        )}
-
-        {run === 'failed' && result && (
-          <>
-            <div className="failbox" style={{ marginTop: 16 }}>
-              <div className="hint__title" style={{ marginBottom: 10 }}>
-                {result.status === 'MODEL_INVALID'
-                  ? 'The problem definition is inconsistent'
-                  : 'Hard constraints cannot all be satisfied'}
-              </div>
-              {result.hints.map((h) => (
-                <div key={h.title} className="hint">
-                  <span className="hint__marker" />
-                  <div>
-                    <div className="hint__title">{h.title}</div>
-                    <div className="hint__detail">{h.detail}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="muted-sm" style={{ marginTop: 10 }}>
-              The solver ran and proved this — it did not crash. Solve time{' '}
-              {stats ? stats.solveTimeSeconds.toFixed(2) : '0.00'} s.
-            </div>
-            <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button variant="primary" onClick={onGoData}>
-                Review input data
-              </Button>
-            </div>
-          </>
-        )}
-      </section>
+      )}
     </div>
   );
 }

@@ -1,10 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from './ds/Button';
 import { Select } from './ds/Select';
+import { useBodyScrollLock } from './ds/useBodyScrollLock';
+import { MoveSessionDialog } from './MoveSessionDialog';
+import { StaleBanner } from './StaleBanner';
+import { findConflicts, spreadNotices } from '../conflicts';
 import { ROOM_TYPES, ROOM_TYPE_COLOR, ROOM_TYPE_LABEL, subjectColor } from '../theme';
 import type { Swatch } from '../theme';
-import { periodTime, semesterWeeks, slotId, slotLabel, weekdayName } from '../slots';
+import { periodTime, semesterWeeks, sessionsIn, slotId, slotLabel, weekdayName } from '../slots';
 import { semesterKey } from '../types';
 import type {
   Assignment,
@@ -20,10 +24,18 @@ interface Props {
   semester: SemesterRef | null;
   semesters: SemesterRef[];
   results: Record<string, SolveResponse>;
+  /** Run state per semester, so the picker can say which ones are still solving. */
+  runs: Record<string, RunState>;
+  /** Semester keys whose stored timetable predates the current input data. */
+  staleKeys: string[];
   onPickSemester: (next: SemesterRef) => void;
   run: RunState;
   result: SolveResponse | null;
+  /** The semester on screen is one of `staleKeys`. */
+  stale: boolean;
   onGenerate: () => void;
+  /** Move one session, by its index in `result.assignments`, to another slot. */
+  onMoveSession: (index: number, slot: string, date: string) => void;
   onGoData: () => void;
   onGoGenerate: () => void;
 }
@@ -33,11 +45,15 @@ interface Props {
  *  should not depend on a display toggle. */
 const SHOWN_PER_CELL = 2;
 
-/** Identity of one placed session. The slot carries the date, so this is unique
- *  across the whole semester, not just the week on screen. */
-function sessionKey(a: Assignment): string {
-  return `${a.subjectId}-${a.slot}`;
-}
+/** Identity of one placed session is its index in `result.assignments`.
+ *
+ *  It used to be `subjectId-slot`, which a hand move breaks twice over: the key
+ *  changes under the selection every time a card is dragged, and two sessions of
+ *  one subject can now be put in the same slot, which collides the key outright.
+ *  A move rewrites the array entry in place, so the index is the one thing about
+ *  a session that a move never touches.
+ */
+type SessionId = number;
 
 /** One placed session. Rendered in the grid cell and, for the sessions a full
  *  cell cannot show, in the overflow dialog -- the same card in both, so a
@@ -46,23 +62,37 @@ function SessionCard({
   assignment: a,
   color,
   selected,
+  clash,
+  dragging,
   onClick,
+  onDragStart,
+  onDragEnd,
 }: {
   assignment: Assignment;
   color: Swatch;
   selected: boolean;
+  /** Hard rules this session breaks, after being moved by hand. */
+  clash?: string[];
+  dragging?: boolean;
   onClick: () => void;
+  /** Absent in the overflow dialog, which is a reader rather than a grid cell. */
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
 }) {
   return (
     <button
       className={`sesscard${a.softViolated ? ' sesscard--soft' : ''}${
-        selected ? ' sesscard--selected' : ''
-      }`}
+        clash ? ' sesscard--clash' : ''
+      }${selected ? ' sesscard--selected' : ''}${dragging ? ' sesscard--dragging' : ''}`}
       style={{ background: color.tint, borderLeftColor: color.c }}
+      draggable={onDragStart !== undefined}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={onClick}
     >
       <div className="sesscard__top">
         <span className="sesscard__subject">{a.subjectName}</span>
+        {clash && <span className="sesscard__clashflag" title={clash.join(' ')} />}
         {a.softViolated && <span className="sesscard__flag" title={a.softReason ?? ''} />}
       </div>
       <div className="sesscard__teacher">{a.teacherName}</div>
@@ -81,7 +111,22 @@ function matchesLens(a: Assignment, lens: Lens, pick: string): boolean {
   return a.roomId === pick;
 }
 
-export function ResultScreen({ problem, semester, semesters, results, onPickSemester, run, result, onGenerate, onGoData, onGoGenerate }: Props) {
+export function ResultScreen({
+  problem,
+  semester,
+  semesters,
+  results,
+  runs,
+  staleKeys,
+  onPickSemester,
+  run,
+  result,
+  stale,
+  onGenerate,
+  onMoveSession,
+  onGoData,
+  onGoGenerate,
+}: Props) {
   const [lens, setLens] = useState<Lens>('group');
   // A faculty-sized timetable is unreadable with every group shown at once, so
   // large results open focused on a single group instead of "All".
@@ -90,10 +135,19 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
   );
   const [colorBy, setColorBy] = useState<'subject' | 'roomType'>('subject');
   const [dense, setDense] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<SessionId | null>(null);
+  // Index being dragged, and the cell it is currently over. Both are transient
+  // and live only for the length of one drag. The index is also held in a ref:
+  // the drop handler must not depend on a re-render having happened between
+  // dragstart and drop, and the state is only there to fade the card.
+  const [dragging, setDragging] = useState<SessionId | null>(null);
+  const draggingRef = useRef<SessionId | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [moving, setMoving] = useState<SessionId | null>(null);
   // Slot id whose overflow dialog is open. A cell shows at most SHOWN_PER_CELL
   // cards; everything past that is only reachable through here.
   const [overflow, setOverflow] = useState<string | null>(null);
+  useBodyScrollLock(overflow !== null);
   // Which teaching week the grid is showing. Reset whenever the semester changes,
   // since week 12 of one term means nothing in another.
   const [weekIndex, setWeekIndex] = useState(0);
@@ -124,6 +178,25 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
   const visible = useMemo(
     () => assignments.filter((a) => matchesLens(a, lens, pick)),
     [assignments, lens, pick],
+  );
+
+  // A session's identity is its position in the full array, so the grid needs a
+  // way back from the filtered view to that position.
+  const indexOf = useMemo(
+    () => new Map<Assignment, SessionId>(assignments.map((a, i) => [a, i])),
+    [assignments],
+  );
+
+  // Hand moves are accepted whatever they break, so the breach is found here.
+  // Recomputed on every edit -- the whole point is that it tracks the grid, not
+  // the solve the grid came from.
+  const conflicts = useMemo(
+    () => (semester ? findConflicts(assignments, problem, semester) : new Map<number, string[]>()),
+    [assignments, problem, semester],
+  );
+  const spread = useMemo(
+    () => (semester ? spreadNotices(assignments, problem, semester) : []),
+    [assignments, problem, semester],
   );
 
   const colorFor = (a: Assignment) =>
@@ -175,9 +248,56 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
     URL.revokeObjectURL(url);
   };
 
+  // Sessions this semester actually has. Zero means there is nothing to solve --
+  // the run would come back OPTIMAL over an empty grid, which reads as a bug.
+  const semesterSessions = semester
+    ? problem.subjects.reduce((n, s) => n + sessionsIn(s, semester), 0)
+    : 0;
+
+  // The semester picker, shared by the empty state and the full toolbar: landing
+  // on an ungenerated semester must not be a one-way door.
+  const semesterPicker = semesters.length > 0 && (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="muted-sm">
+      <span>Semester</span>
+      <Select
+        size="sm"
+        aria-label="Semester"
+        value={semester ? semesterKey(semester) : ''}
+        options={semesters.map((x) => {
+          const key = semesterKey(x);
+          const note =
+            runs[key] === 'solving'
+              ? ' (solving…)'
+              : !results[key]
+                ? ' (not generated)'
+                : staleKeys.includes(key)
+                  ? ' (stale)'
+                  : '';
+          return { value: key, label: `${x.academicYear} · Semester ${x.index}${note}` };
+        })}
+        onChange={(key) => {
+          const next = semesters.find((x) => semesterKey(x) === key);
+          if (next) {
+            onPickSemester(next);
+            setWeekIndex(0);
+            setSelected(null);
+            setOverflow(null);
+            setMoving(null);
+          }
+        }}
+      />
+    </div>
+  );
+
   if (run !== 'solved' || !result) {
+    const empty = semesterSessions === 0 && semester;
     return (
       <div className="screen">
+        {semesterPicker && (
+          <div className="result__controls" style={{ justifyContent: 'flex-end' }}>
+            {semesterPicker}
+          </div>
+        )}
         <div className="card emptystate">
           <div className="ghostgrid">
             {Array.from({ length: 15 }, (_, i) => (
@@ -185,20 +305,30 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
             ))}
           </div>
           <div className="display-md">
-            {run === 'solving' ? 'Solving…' : run === 'failed' ? 'No valid schedule' : 'No timetable yet'}
+            {run === 'solving'
+              ? 'Solving…'
+              : run === 'failed'
+                ? 'No valid schedule'
+                : empty
+                  ? 'Nothing to schedule'
+                  : 'No timetable yet'}
           </div>
           <div className="muted" style={{ marginTop: 6 }}>
             {run === 'failed'
               ? 'The solver proved the hard constraints cannot all be satisfied. See the Generate tab for the reasons.'
               : run === 'error'
                 ? 'The solver service could not be reached.'
-                : `${problem.teachers.length} teachers, ${problem.rooms.length} rooms, ${problem.groups.length} groups, ${problem.subjects.length} subjects. Run the scheduler to produce a weekly grid.`}
+                : empty
+                  ? `No subject runs in ${semester.academicYear} · Semester ${semester.index}. Give a subject sessions in this semester under Data setup → Subjects.`
+                  : `${problem.teachers.length} teachers, ${problem.rooms.length} rooms, ${problem.groups.length} groups, ${problem.subjects.length} subjects. Run the scheduler to produce a weekly grid.`}
           </div>
           <div style={{ marginTop: 18, display: 'flex', gap: 8, justifyContent: 'center' }}>
-            <Button variant="primary" onClick={run === 'failed' ? onGoGenerate : onGenerate}>
-              {run === 'failed' ? 'See why' : 'Generate timetable'}
-            </Button>
-            <Button variant="secondary-pill" onClick={onGoData}>
+            {!empty && (
+              <Button variant="primary" onClick={run === 'failed' ? onGoGenerate : onGenerate}>
+                {run === 'failed' ? 'See why' : 'Generate timetable'}
+              </Button>
+            )}
+            <Button variant={empty ? 'primary' : 'secondary-pill'} onClick={onGoData}>
               Check input data
             </Button>
           </div>
@@ -220,11 +350,12 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
       items: visible.filter((a) => a.slot === overflow),
     };
   })();
-  const selectedAssignment = assignments.find((a) => sessionKey(a) === selected) ?? null;
+  const selectedAssignment = selected === null ? null : (assignments[selected] ?? null);
   const stats = result.stats!;
 
   return (
     <div className="screen">
+      {stale && <StaleBanner onRegenerate={onGenerate} />}
       <div className="result__controls">
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
           <div className="pillgroup">
@@ -260,31 +391,7 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          {semesters.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="muted-sm">
-              <span>Semester</span>
-              <Select
-                size="sm"
-                aria-label="Semester"
-                value={semester ? semesterKey(semester) : ''}
-                options={semesters.map((x) => ({
-                  value: semesterKey(x),
-                  label:
-                    `${x.academicYear} · Semester ${x.index}` +
-                    (results[semesterKey(x)] ? '' : ' (not generated)'),
-                }))}
-                onChange={(key) => {
-                  const next = semesters.find((x) => semesterKey(x) === key);
-                  if (next) {
-                    onPickSemester(next);
-                    setWeekIndex(0);
-                    setSelected(null);
-                    setOverflow(null);
-                  }
-                }}
-              />
-            </div>
-          )}
+          {semesterPicker}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="muted-sm">
             <span>Colour by</span>
             <button
@@ -402,18 +509,60 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
                 return (
                   <div
                     key={id}
-                    className={`grid__cell${isBlocked ? ' grid__cell--blocked' : ''}`}
+                    className={`grid__cell${isBlocked ? ' grid__cell--blocked' : ''}${
+                      dropTarget === id ? ' grid__cell--drop' : ''
+                    }`}
                     style={{ minHeight: dense ? 62 : 92 }}
+                    // preventDefault is what makes a cell a drop target at all.
+                    // Every cell is one: a move that breaks a rule is allowed and
+                    // then flagged, so there is nothing to refuse here.
+                    onDragOver={(e) => {
+                      if (draggingRef.current === null) return;
+                      e.preventDefault();
+                      setDropTarget(id);
+                    }}
+                    onDragLeave={() => setDropTarget((t) => (t === id ? null : t))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDropTarget(null);
+                      // dataTransfer first: it is the drag's own payload, and it
+                      // is readable in `drop` even when the drag began elsewhere.
+                      const carried = Number(e.dataTransfer.getData('text/plain'));
+                      const index = Number.isInteger(carried) ? carried : draggingRef.current;
+                      // End the drag here rather than leaving it to `dragend`: the
+                      // move unmounts the card that was being dragged, so its own
+                      // dragend never arrives and the card would stay faded.
+                      draggingRef.current = null;
+                      setDragging(null);
+                      if (index === null) return;
+                      const from = assignments[index];
+                      if (from && from.slot !== id) onMoveSession(index, id, date);
+                    }}
                   >
                     {cell.slice(0, SHOWN_PER_CELL).map((a) => {
-                      const key = sessionKey(a);
+                      const key = indexOf.get(a)!;
                       return (
                         <SessionCard
                           key={key}
                           assignment={a}
                           color={colorFor(a)}
                           selected={selected === key}
+                          clash={conflicts.get(key)}
+                          dragging={dragging === key}
                           onClick={() => setSelected(selected === key ? null : key)}
+                          onDragStart={(e) => {
+                            // dataTransfer carries the payload; a drag that sets
+                            // none is a no-op in Firefox anyway.
+                            e.dataTransfer.setData('text/plain', String(key));
+                            e.dataTransfer.effectAllowed = 'move';
+                            draggingRef.current = key;
+                            setDragging(key);
+                          }}
+                          onDragEnd={() => {
+                            draggingRef.current = null;
+                            setDragging(null);
+                            setDropTarget(null);
+                          }}
                         />
                       );
                     })}
@@ -422,7 +571,7 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
                       // of the hidden ones, so a selection never looks lost.
                       <button
                         className={`sesscard sesscard--more${
-                          hidden.some((a) => sessionKey(a) === selected)
+                          hidden.some((a) => indexOf.get(a) === selected)
                             ? ' sesscard--selected'
                             : ''
                         }`}
@@ -474,12 +623,25 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
                     </div>
                   ))}
                 </div>
+                {selected !== null &&
+                  conflicts.get(selected)?.map((c, i) => (
+                    <div key={i} className="penalty penalty--bad">
+                      {c}
+                    </div>
+                  ))}
                 {selectedAssignment.softViolated && (
                   <div className="penalty">{selectedAssignment.softReason}</div>
                 )}
                 {selectedAssignment.roomPreferenceRank === 0 && (
                   <div className="muted-sm">First-choice room for this teacher.</div>
                 )}
+                {/* Dragging reaches the week on screen; this reaches the rest of
+                    the semester, and is the only route from a keyboard. */}
+                <div style={{ marginTop: 14 }}>
+                  <Button variant="secondary-pill" onClick={() => setMoving(selected)}>
+                    Move to another week
+                  </Button>
+                </div>
               </>
             ) : (
               <div className="muted-sm" style={{ marginTop: 10 }}>
@@ -506,11 +668,41 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 12 }}>
-              <span className={`badge ${result.validation?.ok ? 'badge--ok' : 'badge--bad'}`}>
-                {result.validation?.ok ? 'All hard rules verified' : 'Verification failed'}
+            {/* The solver's own verdict, until the grid is edited by hand -- at
+                which point the figures above still describe the run, and only
+                this re-check describes what is on screen. */}
+            <div style={{ marginTop: 12, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <span
+                className={`badge ${
+                  conflicts.size > 0 || !result.validation?.ok ? 'badge--bad' : 'badge--ok'
+                }`}
+              >
+                {conflicts.size > 0
+                  ? `${conflicts.size} session(s) in conflict`
+                  : result.validation?.ok
+                    ? 'All hard rules verified'
+                    : 'Verification failed'}
               </span>
+              {spread.length > 0 && (
+                <span className="badge badge--warn">
+                  {spread.length} week(s) over the even spread
+                </span>
+              )}
             </div>
+            {(conflicts.size > 0 || spread.length > 0) && (
+              <div className="failbox" style={{ marginTop: 10 }}>
+                {[...new Set([...conflicts.values()].flat())].map((c, i) => (
+                  <div key={`c${i}`} className="hint__detail">
+                    {c}
+                  </div>
+                ))}
+                {spread.map((c, i) => (
+                  <div key={`s${i}`} className="hint__detail">
+                    {c}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="card card--pad">
@@ -546,6 +738,31 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
         </aside>
       </div>
 
+      {moving !== null && assignments[moving] && semester && (
+        <MoveSessionDialog
+          assignment={assignments[moving]}
+          problem={problem}
+          semester={semester}
+          weeks={weeks}
+          conflictsAt={(date, period) => {
+            // The same check the grid runs, against the timetable this move would
+            // produce -- so the dialog and the card can never disagree.
+            const slot = `${date}-${period}`;
+            const next = assignments.map((a, i) => (i === moving ? { ...a, slot, date } : a));
+            return findConflicts(next, problem, semester).get(moving) ?? [];
+          }}
+          onMove={(slot, date) => {
+            onMoveSession(moving, slot, date);
+            // Follow the session to its new week, so the move can be seen rather
+            // than taken on trust.
+            const target = weeks.findIndex((w) => w.dates.includes(date));
+            if (target >= 0) setWeekIndex(target);
+            setMoving(null);
+          }}
+          onClose={() => setMoving(null)}
+        />
+      )}
+
       {overflowSessions && (
         <div className="modal__backdrop" onClick={() => setOverflow(null)}>
           <div
@@ -571,13 +788,14 @@ export function ResultScreen({ problem, semester, semesters, results, onPickSeme
                 what scrolls -- a busy period and a quiet one open the same box. */}
             <div className="modal__scroll">
               {overflowSessions.items.map((a) => {
-                const key = sessionKey(a);
+                const key = indexOf.get(a)!;
                 return (
                   <SessionCard
                     key={key}
                     assignment={a}
                     color={colorFor(a)}
                     selected={selected === key}
+                    clash={conflicts.get(key)}
                     onClick={() => {
                       setSelected(key);
                       setOverflow(null);

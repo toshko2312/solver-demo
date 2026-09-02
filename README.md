@@ -20,7 +20,7 @@ docker compose up --build
 | Service    | URL                     | What it is                                  |
 |------------|-------------------------|---------------------------------------------|
 | `frontend` | http://localhost:5173   | React + Vite dev server (open this)         |
-| `solver`   | http://localhost:8000   | FastAPI + CP-SAT (`/health`, `/solve`, `/docs`) |
+| `solver`   | http://localhost:8000   | FastAPI + CP-SAT (`/health`, `/solve`, `/solve/stream`, `/docs`) |
 
 The frontend proxies `/api/*` to the solver, so the browser only ever talks to port 5173.
 
@@ -48,7 +48,8 @@ cd solver && .venv/bin/python -m pytest      # 51 tests, ~10 min
 ## Demo flow
 
 1. **Load an example** (top right) — two datasets, both modelling **Факултет "Полиция" of
-   Академия на МВР**, on a Mon–Fri × 6-period template expanded across real semester dates:
+   Академия на МВР**, on a Mon–Fri × 6-period template — editable in *Data setup → Time slots* —
+   expanded across real semester dates:
 
    | | Contents | Behaviour |
    |---|---|---|
@@ -57,7 +58,13 @@ cd solver && .venv/bin/python -m pytest      # 51 tests, ~10 min
 
    The small one is the better first click: it solves instantly, fits on screen, and still shows a
    real trade-off. The full one is what a faculty timetable actually looks like.
-2. **Generate** — POSTs the whole problem to `/solve`. The small example comes back `OPTIMAL`
+2. **Generate** — POSTs the whole problem to `/solve/stream`, which runs the identical solve and
+   reports its own milestones as server-sent events: the model being built, then each rung of the
+   priority ladder starting, improving and settling, and finally the same `SolveResponse` that
+   `/solve` returns in one piece. That is what drives the progress bar — the ladder's phase count is
+   fixed before the search starts, so the bar only ever moves forwards. A server without the
+   streaming endpoint falls back to plain `/solve`. Several semesters can be generated at once; each
+   run gets its own row on the Generate screen. The small example comes back `OPTIMAL`
    almost immediately. The full one is a genuinely hard instance: within the default 30 s budget
    CP-SAT returns a valid, good schedule — every session placed, all hard rules verified — but often
    with status **FEASIBLE**, because it cannot *prove* optimality in the time. That distinction is
@@ -71,20 +78,31 @@ cd solver && .venv/bin/python -m pytest      # 51 tests, ~10 min
 4. **Break it** — two easy ways:
    - *Data setup → Time slots →* **Remove period** until only one period a day remains. Recruit
      Class A needs 7 sessions and only 5 slots exist → `INFEASIBLE`, with that named as the reason.
+   - *Data setup → Time slots →* switch **Wed** off in the teaching-days row. The column and every
+     Wednesday date go with it, and any teacher preference on that weekday is dropped after a prompt
+     naming the count. Switch it back on and it returns to its own column, between Tue and Thu.
    - *Data setup → Time slots →* block cells (e.g. the whole Period 1 row). Blocked slots are excluded
      from solving; block enough and the problem becomes impossible. Block just a few and watch the
      soft penalty rise instead — Sgt. Bergstrom prefers period-1 slots, so blocking that row costs
      3 preference violations and the cards get a dashed edge and an amber marker.
-5. **Tinker** — the *Settings* button on the Generate tab opens the solver settings dialog.
+5. **Move a session by hand** — drag a card to another cell of the week on screen, or select it and
+   use *Move to another week* in the Session panel to pick a week, day and period. Moves are never
+   refused: one that double-books a teacher, room or group — or lands on a blocked cell, a date a
+   group is not in term, or a week already at its even-spread ceiling — is accepted and then flagged,
+   with a red ring on the cards and the reasons under the Session panel's verification badge. The
+   solver's own figures above it keep describing the *run*, not the edited grid, and a moved card
+   keeps the preference flags it was given. Generate is the reset: hand edits do not survive it.
+6. **Tinker** — the *Settings* button on the Generate tab opens the solver settings dialog.
    - **Stop at first solution.** Returns a legal-but-bad timetable instead of the optimum. On the
      small example: penalty 182 in 0.8 s, against 12 in ~4 s.
    - **Priority.** Open *Data setup → Teachers*, give a junior instructor a *Priority weight* above
      a senior one's, and re-generate: the ladder reorders and the contested room changes hands. The
      ladder panel on the Generate tab shows each rank in turn and what it had to give up.
    - **Gap weight** is deliberately *not* a demonstration any more — see the table below for why.
-6. Every successful solve is **re-checked independently** of the model (`validate_assignments`) and the
+7. Every successful solve is **re-checked independently** of the model (`validate_assignments`) and the
    result shown as *All hard rules verified*. That badge is what makes "the solver produced a valid
-   timetable" a claim you can check rather than trust.
+   timetable" a claim you can check rather than trust — and once a session is moved by hand, the
+   frontend re-runs the same rules and the badge starts reporting the grid instead of the run.
 
 ---
 
@@ -98,7 +116,7 @@ plain-language explanation on hover or keyboard focus — no CP-SAT vocabulary r
 
 | Setting | Effect on the seed dataset |
 |---|---|
-| Time limit | **Default 30 s**, ceiling 20 min. The full seed is hard enough to use every second it is given, so this one binds — more time buys a better objective, not a faster answer. |
+| Time limit | **Default 30 s**, up to unlimited. The full seed is hard enough to use every second it is given, so this one binds — more time buys a better objective, not a faster answer. |
 | Teacher preference weight (default 10) | Cost of a session outside a teacher's preferred slots. It trades against the room weight *within* a rank; it cannot trade across ranks. |
 | Room preference weight (default 5) | Cost per place down a teacher's ranked room list, scored per room type. Below the slot weight, so when both cannot be met the slot is the one kept. |
 | Gap weight (default 1) | **No longer a trade-off knob**, and the change is worth understanding: group gaps are the last rung of the priority ladder, so by the time they are considered every teacher rank is frozen at its best. On the small example the default gives **12 gap units**, and raising it to **10** gives the same 12 — it only scales the number, because nothing is left to trade against. Set it to `0` to stop reporting them. |
@@ -168,8 +186,8 @@ subject when it does.
 **The calendar.** A timetable is generated for one **semester**, identified by academic year and
 index (`2025/2026`, semester 1). The *dates* are per group: each group carries its own start and end
 for a semester, plus any breaks, so two cohorts can run the same term on different calendars. The
-weekday × period template defines which periods exist and `blockedSlots` still blocks a period on that
-weekday *every* week; the frontend expands that template across the semester's real dates, and slots
+weekday × period template defines which weekdays are taught, when each period runs, and how many
+there are; `blockedSlots` still blocks a period on that weekday *every* week; the frontend expands that template across the semester's real dates, and slots
 falling on a break simply do not exist.
 
 A subject declares a **total for the semester** rather than a weekly rate — sessions land on real
@@ -236,12 +254,12 @@ On the four-year seed, presolve alone is ~6s and finding a first timetable ~6s, 
 settles the top rank or two and leaves the rest `NOT REACHED`; more time settles more of them. The
 small example finishes the whole ladder in ~3s.
 
-`max_time_in_seconds` is always set. It defaults to the 20-minute ceiling
-(`MAX_SOLVE_SECONDS` in `solver/app/models.py`), so a solve runs as long as it needs to and answers
-the moment it finishes; the Generate tab offers 10 s / 1 min / 20 min presets and a free-form box, and
-the API rejects anything above the ceiling. The cap exists because CP-SAT can take unbounded time to
-*prove* infeasibility — without it a hard instance would pin a worker thread and an open HTTP request
-indefinitely. A running solve shows a live elapsed clock. 8
+`maxTimeInSeconds` defaults to 30 s and has **no ceiling**; the Settings dialog offers
+10 s / 30 s / 2 min / 20 min presets, a free-form box, and **Unlimited**. Unlimited is `null` on the
+wire and means CP-SAT is handed no deadline at all: it runs until it finishes or proves optimality,
+which is the only way a faculty-sized instance is ever proven. The cost is real and deliberate — the
+HTTP request stays open for the whole run, holding a worker, and nothing short of restarting the
+service will stop it. A running solve shows a live elapsed clock. 8
 workers. `OPTIMAL` and `FEASIBLE` are reported distinctly: "proven minimum penalty" and "best found
 inside the time limit" are different claims. A timeout with nothing found is `UNKNOWN`, never
 `INFEASIBLE`.
@@ -273,7 +291,9 @@ the full requirement:
 - **No teacher hard availability** — a teacher's unavailability can only be expressed globally, by
   blocking a slot for everyone. Per-teacher preferences are soft, and stay soft however senior the
   teacher: rank decides who wins a contested slot or room, never whether the session happens.
-- **No session length or double-period blocking** — every session is exactly one period.
+- **No session length or double-period blocking** — every session is exactly one period. Periods
+  carry real clock times, and must run in order without overlapping, but the solver only ever sees
+  the period *number*: two adjacent periods are never merged into one long session.
 - **No room adjacency, travel time, or building constraints.**
 - **No persistence** — state lives in the browser and is POSTed in full on every solve.
 
@@ -285,7 +305,7 @@ the full requirement:
 solver/app/timetable_solver.py   the CP-SAT model + independent output validator
 solver/app/diagnostics.py        infeasibility hints
 solver/app/models.py             the whole wire format
-solver/app/main.py               FastAPI (/health, /solve)
+solver/app/main.py               FastAPI (/health, /solve, /solve/stream)
 solver/tests/test_solver.py      feasibility, validity, infeasibility, soft-constraint tests
 shared/seed-small.json           the small example — also the default test fixture
 shared/seed-full.json            the full four-year faculty example

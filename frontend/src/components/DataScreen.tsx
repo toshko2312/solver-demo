@@ -11,7 +11,7 @@ import { SubjectsTable } from './tables/SubjectsTable';
 import { TeachersTable } from './tables/TeachersTable';
 import { nextId } from '../seed';
 import { allSlots, openSlots } from '../slots';
-import type { Group, Problem, Role, Room, Subject, Teacher } from '../types';
+import type { Group, Problem, Role, Room, SlotConfig, Subject, Teacher } from '../types';
 
 type Section = EntityKind | 'slots';
 
@@ -44,7 +44,7 @@ const COPY: Record<Section, [string, string, string]> = {
   ],
   slots: [
     'Time slots',
-    'The weekly grid definition. Block a cell to remove it from solving.',
+    'The weekly grid definition. Switch a weekday off, set when each period runs, and block a cell to remove it from solving.',
     'Add period',
   ],
 };
@@ -186,6 +186,64 @@ export function DataScreen({ problem, onChange }: Props) {
     });
   };
 
+  // Removing a day or a period is a delete like any other on this screen, so it
+  // gets the same treatment: name the knock-on effect, then cascade. It has to
+  // live here rather than in the pane because the orphans are teacher
+  // preferences, and the pane is only handed the slot config.
+  const dropSlots = (
+    doomed: (id: string) => boolean,
+    where: string,
+    slotConfig: SlotConfig,
+  ) => {
+    const affected = problem.teachers.filter((t) => t.preferredSlots.some(doomed));
+    const slots = affected.reduce((n, t) => n + t.preferredSlots.filter(doomed).length, 0);
+    if (
+      slots > 0 &&
+      !window.confirm(
+        `${affected.length} teacher(s) prefer ${slots} slot(s) ${where}. Those preferences will be dropped. Continue?`,
+      )
+    ) {
+      return;
+    }
+    // One edit, not two: App bumps its data version per change, and removing a
+    // day should mark the stored timetables stale exactly once.
+    onChange({
+      ...problem,
+      slotConfig: {
+        ...slotConfig,
+        blockedSlots: slotConfig.blockedSlots.filter((id) => !doomed(id)),
+      },
+      teachers: problem.teachers.map((t) =>
+        t.preferredSlots.some(doomed)
+          ? { ...t, preferredSlots: t.preferredSlots.filter((id) => !doomed(id)) }
+          : t,
+      ),
+    });
+  };
+
+  const removeDay = (day: string) => {
+    const config = problem.slotConfig;
+    if (config.days.length <= 1) return;
+    const prefix = `${day.toLowerCase()}-`;
+    dropSlots((id) => id.startsWith(prefix), `on ${day}`, {
+      ...config,
+      days: config.days.filter((d) => d !== day),
+    });
+  };
+
+  const removePeriod = () => {
+    const config = problem.slotConfig;
+    if (config.periods <= 1) return;
+    // Only the last period can go: the numbers are slot ids, and renumbering
+    // would silently repoint every blocked cell and every teacher preference.
+    const suffix = `-${config.periods}`;
+    dropSlots((id) => id.endsWith(suffix), `in Period ${config.periods}`, {
+      ...config,
+      periods: config.periods - 1,
+      periodTimes: config.periodTimes.slice(0, config.periods - 1),
+    });
+  };
+
   const togglePreference = (teacherId: string, slotId: string) => {
     onChange({
       ...problem,
@@ -298,6 +356,8 @@ export function DataScreen({ problem, onChange }: Props) {
           <SlotConfigPane
             config={problem.slotConfig}
             onChange={(slotConfig) => onChange({ ...problem, slotConfig })}
+            onRemoveDay={removeDay}
+            onRemovePeriod={removePeriod}
           />
         )}
       </section>

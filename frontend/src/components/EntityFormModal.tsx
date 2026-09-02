@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { Button } from './ds/Button';
 import { Select } from './ds/Select';
+import { useBodyScrollLock } from './ds/useBodyScrollLock';
 import { RankedRoomPicker } from './RankedRoomPicker';
 import { SemesterDatesEditor } from './SemesterDatesEditor';
 import { SubjectSemestersEditor } from './SubjectSemestersEditor';
@@ -42,6 +43,7 @@ const TITLES: Record<EntityKind, string> = {
 export function EntityFormModal({ kind, draft, isNew, problem, onSave, onClose }: Props) {
   const [value, setValue] = useState<any>({ ...draft });
   const [error, setError] = useState<string | null>(null);
+  useBodyScrollLock(true);
 
   const patch = (fields: Record<string, unknown>) => setValue((v: any) => ({ ...v, ...fields }));
 

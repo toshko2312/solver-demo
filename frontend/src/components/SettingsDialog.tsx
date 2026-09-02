@@ -3,12 +3,8 @@ import { useEffect, type ReactNode } from 'react';
 import { Accordion } from './ds/Accordion';
 import { Button } from './ds/Button';
 import { HelpTip } from './ds/HelpTip';
-import {
-  DEFAULT_SOLVE_SECONDS,
-  MAX_SOLVE_SECONDS,
-  defaultSettings,
-  formatLimit,
-} from '../settings';
+import { useBodyScrollLock } from './ds/useBodyScrollLock';
+import { DEFAULT_SOLVE_SECONDS, defaultSettings, formatLimit } from '../settings';
 import type { SearchParams, SolverSettings } from '../types';
 
 interface Props {
@@ -80,6 +76,7 @@ function Choice<T extends string | number | null>({
 }
 
 export function SettingsDialog({ settings, onChange, onClose }: Props) {
+  useBodyScrollLock(true);
   const set = (patch: Partial<SolverSettings>) => onChange({ ...settings, ...patch });
   const setSearch = (patch: Partial<SearchParams>) =>
     onChange({ ...settings, search: { ...settings.search, ...patch } });
@@ -124,16 +121,17 @@ export function SettingsDialog({ settings, onChange, onClose }: Props) {
         <Setting
           label="Time limit"
           help="How long the scheduler is allowed to think. It stops at this point and hands back the best timetable it has found so far. A full faculty timetable will use every second you give it, so more time buys a better schedule rather than a faster answer."
-          meta={`Default ${formatLimit(DEFAULT_SOLVE_SECONDS)}, capped at ${formatLimit(
-            MAX_SOLVE_SECONDS,
-          )}; the solver rejects anything longer.`}
+          meta={`Default ${formatLimit(
+            DEFAULT_SOLVE_SECONDS,
+          )}. Unlimited runs until the scheduler proves it can do no better — on a faculty-sized problem that can take hours, and the run cannot be stopped from here.`}
         >
           <Choice
             options={[
               ['10 s', 10],
               ['30 s', DEFAULT_SOLVE_SECONDS],
               ['2 min', 120],
-              ['20 min', MAX_SOLVE_SECONDS],
+              ['20 min', 20 * 60],
+              ['Unlimited', null],
             ]}
             value={settings.maxTimeInSeconds}
             onChange={(v) => set({ maxTimeInSeconds: v })}
@@ -142,13 +140,9 @@ export function SettingsDialog({ settings, onChange, onClose }: Props) {
             className="setting__number"
             type="number"
             min={1}
-            max={MAX_SOLVE_SECONDS}
-            value={settings.maxTimeInSeconds}
-            onChange={(e) =>
-              set({
-                maxTimeInSeconds: Math.min(MAX_SOLVE_SECONDS, Math.max(1, Number(e.target.value))),
-              })
-            }
+            disabled={settings.maxTimeInSeconds === null}
+            value={settings.maxTimeInSeconds ?? ''}
+            onChange={(e) => set({ maxTimeInSeconds: Math.max(1, Number(e.target.value)) })}
           />
           <span className="muted-sm">s</span>
         </Setting>
@@ -217,7 +211,7 @@ export function SettingsDialog({ settings, onChange, onClose }: Props) {
       <Accordion title="B · Search" subtitle="Same answer, different amount of work to reach it.">
         <p className="settings__warn">
           These do not change which timetables are legal — only how the solver looks for one. Some
-          combinations are much slower; the {formatLimit(MAX_SOLVE_SECONDS)} limit still applies.
+          combinations are much slower; the time limit above still applies.
         </p>
 
         <Setting

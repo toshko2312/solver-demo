@@ -11,11 +11,6 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
-# Ceiling on any single solve. CP-SAT can take unbounded time to *prove*
-# infeasibility, so without a cap a hard instance would pin a worker thread and
-# an open HTTP request indefinitely.
-MAX_SOLVE_SECONDS = 20 * 60
-
 # What a solve is given unless the caller says otherwise. Deliberately far below
 # the ceiling: a faculty-sized timetable is a hard optimisation problem that will
 # happily use every second it is given without ever proving optimality, and
@@ -306,11 +301,15 @@ class SolveRequest(BaseModel):
     rooms: List[Room]
     groups: List[Group]
     subjects: List[Subject]
-    # Always bounded, and hard-capped at 20 minutes. The default is the cap: run
-    # as long as it takes, up to the point where an unattended request would be a
-    # runaway rather than a slow answer. On expiry the best solution found so far
-    # is returned, and the status says whether it was proven optimal.
-    maxTimeInSeconds: float = Field(default=DEFAULT_SOLVE_SECONDS, gt=0.0, le=MAX_SOLVE_SECONDS)
+    # On expiry the best solution found so far is returned, and the status says
+    # whether it was proven optimal.
+    #
+    # None means *no* limit: CP-SAT is given no deadline and runs until it
+    # finishes or proves optimality. There is deliberately no ceiling -- proving
+    # a faculty-sized timetable optimal takes longer than any cap worth setting.
+    # The cost is real: the HTTP request stays open for the whole run, holding a
+    # worker, and nothing short of restarting the service will stop it.
+    maxTimeInSeconds: Optional[float] = Field(default=DEFAULT_SOLVE_SECONDS, gt=0.0)
     # Soft-constraint weights. Preference outranks gaps by an order of magnitude
     # so a compact day is never bought at the price of a teacher preference.
     preferenceWeight: int = Field(default=10, ge=0, le=1000)
@@ -414,7 +413,7 @@ class SettingsUsed(BaseModel):
     was solved under the previous ones.
     """
 
-    maxTimeInSeconds: float
+    maxTimeInSeconds: Optional[float]
     preferenceWeight: int
     roomPreferenceWeight: int
     gapWeight: int

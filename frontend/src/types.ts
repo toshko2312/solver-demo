@@ -201,7 +201,8 @@ export interface SearchParams {
 }
 
 export interface SolverSettings {
-  maxTimeInSeconds: number;
+  /** null means no limit at all: the solver runs until it finishes. */
+  maxTimeInSeconds: number | null;
   preferenceWeight: number;
   roomPreferenceWeight: number;
   gapWeight: number;
@@ -219,6 +220,25 @@ export interface SolveResponse {
   hints: Hint[];
   /** What the run was actually solved with -- not necessarily what is on screen now. */
   settingsUsed: SolverSettings | null;
+}
+
+/** Live progress of a solve in flight, assembled from the solver's own events.
+ *  The ladder runs a fixed sequence -- model build, warm-up, one phase per rank
+ *  tier, then gaps -- so `phase of total` only ever moves forwards. */
+export interface SolveProgress {
+  /** 0 while the model is still being built, then 1..total. */
+  phase: number;
+  total: number;
+  /** 'building' | 'warmup' | 'tier' | 'gap' | 'combined'. */
+  label: string;
+  /** Rank short-names this phase is settling; empty for warm-up and gaps. */
+  roles: string[];
+  /** Best penalty this phase has found so far, and the bound it is proving
+   *  against. Both null until CP-SAT reports its first improvement. */
+  best: number | null;
+  bound: number | null;
+  /** Penalties the phases that already settled agreed to, newest last. */
+  settled: { label: string; roles: string[]; penalty: number | null; status: string }[];
 }
 
 export type RunState = 'empty' | 'solving' | 'solved' | 'failed' | 'error';

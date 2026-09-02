@@ -1,9 +1,5 @@
 import type { SolverSettings } from './types';
 
-/** The solver hard-caps a single solve at this (MAX_SOLVE_SECONDS in
- *  solver/app/models.py); the API rejects anything larger. */
-export const MAX_SOLVE_SECONDS = 20 * 60;
-
 /** Mirrors DEFAULT_SOLVE_SECONDS in solver/app/models.py. The full seed is a hard
  *  instance that would otherwise run to the ceiling every time. */
 export const DEFAULT_SOLVE_SECONDS = 30;
@@ -42,8 +38,9 @@ export function countNonDefault(settings: SolverSettings): number {
   return n;
 }
 
-/** 1200 -> "20 min", 60 -> "1 min", 10 -> "10 s". */
-export function formatLimit(seconds: number): string {
+/** 1200 -> "20 min", 60 -> "1 min", 10 -> "10 s", null -> "Unlimited". */
+export function formatLimit(seconds: number | null): string {
+  if (seconds === null) return 'Unlimited';
   if (seconds % 60 === 0 && seconds >= 60) return `${seconds / 60} min`;
   return `${seconds} s`;
 }

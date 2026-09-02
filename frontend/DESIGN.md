@@ -204,6 +204,49 @@ between "derived" and "invented" stays visible.
   `86vh`), so a period with three sessions and one with thirty open the same box; the list inside is
   what scrolls. Chrome — backdrop, 18px radius, hairline, `Close` link — is inherited from the entity
   modal; no shadow is added. The design project documents no dialog at all.
+- **`.progress` / `.progress__fill`** — a determinate sibling of the mock's `.sweep`, same geometry
+  (4 px, pill radius, `--color-primary` on `#f0f0f2`) so the two read as one control in two states:
+  the sweep while there is nothing to count, the bar once the solver has said how many phases the
+  run has. The canvas file documents only the indeterminate sweep.
+- **`.accordion__aside` / `.runlist` / `.runrow__*`** — the Generate screen lists one accordion row
+  per solve, with its status and live progress in the summary row and its full result in the body.
+  The canvas file shows a single run panel and no accordion outside the settings dialog.
+- **`.stalebar`** — the banner over a timetable generated before the input data changed. Uses the
+  app's amber warn palette (`#fdf6ee` on `#8a4408`) with a **solid** hairline: dashed edges are
+  reserved for soft conflicts and blocked slots, and a stale timetable is neither.
+- **`.daytoggles` / `.daytoggle`** — the Mon–Sun row above the slot grid; a weekday is switched on or
+  off there rather than added and removed from the end of the week. On reuses the grid's own
+  teaching palette (`#e9f1fb` on `rgba(0,102,204,.35)`), off reuses the blocked palette (`#f5f5f7` on
+  `#c7c7cc`) but with a **solid** hairline — dashed edges are reserved for soft conflicts and blocked
+  cells, and a weekday nobody teaches on is neither. Capsule radius and the standard `scale(0.95)`
+  press. The canvas file draws the slot grid as a fixed Mon–Fri week with no control over it.
+- **`.slotgrid__times` / `.slotgrid__time` / `.slotgrid__rowhead--bad` / `.slotgrid__err`** — period
+  start and end are four `.dd--sm` dropdowns in the grid's row head: hour and minute per end, the
+  pair at a 3px gap and the two ends at 7px, so a time still reads as one value. `input[type=time]`
+  drew this first and drew it wrong — the format is the viewer's locale's to choose, so it rendered
+  `08:00 AM` with a clock glyph from an icon set this app does not own. The option labels are ours,
+  so the clock is always 24-hour; this is the **Dropdown** rule ("native select chrome is OS-drawn
+  and cannot carry the design") applied to the other native picker. Minutes step by a quarter hour,
+  widened to hold an off-grid value when the stored problem has one, since a `Select` whose value
+  matches no option would fall back to its placeholder and hide a real time. A period whose times
+  would overlap its neighbour keeps what was picked, takes a `#7d1f1f` trigger border and shows the
+  reason underneath at 11px in the same colour — the app's bad-status colour, used here as inline
+  validation rather than as a status. The canvas file renders period times as static text.
+- **`input[type=date]` stays native**, in `SemesterDatesEditor.tsx` alone. A date picker is a month
+  grid, not a list, and the design project documents no such panel — there is nothing here to derive
+  it from, and inventing one would be a bigger departure than the OS calendar is. Dropdowns and time
+  pickers have a documented answer and must use it.
+- **`.sesscard--clash` / `.sesscard__clashflag` / `.sesscard--dragging` / `.grid__cell--drop` /
+  `.penalty--bad`** — the timetable can be edited by hand: a session is dragged to another cell, or
+  moved through a dialog. A move that breaks a hard rule is accepted and then flagged, so a card
+  needs a treatment stronger than the soft-conflict one it may already be wearing. The clash ring is
+  the **same ring shape `.sesscard--selected` uses**, in `#7d1f1f` instead of Action Blue, and
+  **solid** — dashed edges are reserved for soft conflicts and blocked cells. Its marker is a disc
+  where the soft marker is a triangle, because both can sit on one card. A card selected *and*
+  clashing takes both rings, red inside blue. The drop target reuses the slot grid's teaching pair
+  (`#e9f1fb` on `rgba(0,102,204,.35)`), as an inset ring so the cell does not shift under the cursor.
+  `.penalty--bad` is the detail panel's amber `.penalty` block in the bad-status palette. The canvas
+  file's grid is read-only and documents no drag affordance at all.
 - **Status colours** (`#1f7a3d` ok, `#8a4408` warn, `#7d1f1f` bad and their tints) are an app
   addition; the source system has no semantic status palette.
 
