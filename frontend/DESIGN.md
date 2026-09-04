@@ -232,7 +232,8 @@ between "derived" and "invented" stays visible.
   would overlap its neighbour keeps what was picked, takes a `#7d1f1f` trigger border and shows the
   reason underneath at 11px in the same colour — the app's bad-status colour, used here as inline
   validation rather than as a status. The canvas file renders period times as static text.
-- **`input[type=date]` stays native**, in `SemesterDatesEditor.tsx` alone. A date picker is a month
+- **`input[type=date]` stays native**, in `CourseDatesEditor.tsx` and the offering editor's spread
+  window and изпитна дата. A date picker is a month
   grid, not a list, and the design project documents no such panel — there is nothing here to derive
   it from, and inventing one would be a bigger departure than the OS calendar is. Dropdowns and time
   pickers have a documented answer and must use it.
@@ -247,6 +248,29 @@ between "derived" and "invented" stays visible.
   (`#e9f1fb` on `rgba(0,102,204,.35)`), as an inset ring so the cell does not shift under the cursor.
   `.penalty--bad` is the detail panel's amber `.penalty` block in the bad-status palette. The canvas
   file's grid is read-only and documents no drag affordance at all.
+- **`.slotgrid__break`** — the gap the period times leave between two periods, drawn as a
+  warn-tinted rule between the rows it sits between. It exists because the обедна почивка is
+  otherwise *invisible*: nothing marks it in the data, because nothing enforces it — it is simply a
+  stretch of clock no period covers. A break you cannot see is a break somebody will delete by
+  accident.
+- **`.prefgrid--hard`** — the availability grid is not the preference grid. A selected preference
+  cell is a dashed Action-Blue outline (soft, and dashed means soft everywhere in this app); a
+  selected availability cell is a **solid** `#1f7a3d` outline on the ok tint, because hard
+  availability is not something the objective can trade away. The two grids sit one above the other
+  in the teacher form and have to be told apart at a glance.
+- **`.sesscard__marker`** — the activity marker (л / у / п) beside the subject code on a session
+  card, at regular weight in `#6e6e73` so it reads as an annotation on the code rather than part of
+  it. It is what the printed разписание puts in its grid cells, and the card echoes it.
+- **`.offering` / `.offering__grid` / `.offering__head`** — the учебен план form is two forms in one
+  (лекции and упражнения are almost different subjects), separated by eyebrow headings over a
+  hairline rather than by boxes or cards: they are one form, and boxing them would say otherwise.
+  `.offering__grid` is the auto-fit row the хорариум's three numbers sit in.
+- **`.razp__frame`** — the printed разписание is rendered server-side as a complete HTML document
+  with its own `@page` rules, so it is shown in a sandboxed iframe rather than spliced into this
+  page. The frame is a 12px-radius hairline box on white; nothing inside it is styled from here.
+- **`.dot`** — an 8px colour disc before a subject's name in the catalogue and учебен план tables,
+  carrying the same `subjectColor` the session cards use. The design's tables have no colour column,
+  and a badge would be too heavy for a row that already carries a code and a name.
 - **Status colours** (`#1f7a3d` ok, `#8a4408` warn, `#7d1f1f` bad and their tints) are an app
   addition; the source system has no semantic status palette.
 

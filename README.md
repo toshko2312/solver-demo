@@ -20,7 +20,7 @@ docker compose up --build
 | Service    | URL                     | What it is                                  |
 |------------|-------------------------|---------------------------------------------|
 | `frontend` | http://localhost:5173   | React + Vite dev server (open this)         |
-| `solver`   | http://localhost:8000   | FastAPI + CP-SAT (`/health`, `/solve`, `/solve/stream`, `/docs`) |
+| `solver`   | http://localhost:8000   | FastAPI + CP-SAT (`/health`, `/solve`, `/solve/stream`, `/razpisanie`, `/docs`) |
 
 The frontend proxies `/api/*` to the solver, so the browser only ever talks to port 5173.
 
@@ -40,7 +40,7 @@ npm install && npm run dev
 ### Tests
 
 ```bash
-cd solver && .venv/bin/python -m pytest      # 51 tests, ~10 min
+cd solver && .venv/bin/python -m pytest      # ~100 tests, ~10 min
 ```
 
 ---
@@ -48,58 +48,88 @@ cd solver && .venv/bin/python -m pytest      # 51 tests, ~10 min
 ## Demo flow
 
 1. **Load an example** (top right) — two datasets, both modelling **Факултет "Полиция" of
-   Академия на МВР**, on a Mon–Fri × 6-period template — editable in *Data setup → Time slots* —
-   expanded across real semester dates:
+   Академия на МВР**, on the academy's own day: **six 90-minute periods on a six-day week**,
+   08:00–18:45, each period two academic hours — so a day is the twelve academic hours a учебен
+   план counts in. Editable in *Data setup → Time slots*, expanded across real semester dates.
 
    | | Contents | Behaviour |
    |---|---|---|
-   | **Small example** | 6 instructors, 8 rooms, 3 groups, 12 subjects, 21 sessions | `OPTIMAL` in ~4 s: all four rank tiers settled, every teacher gets their slots and their first-choice rooms — start here |
-   | **Full example** | 30 instructors, 22 rooms, 20 groups, 158 subjects, **170 sessions** | a genuinely hard instance; see below |
+   | **Small example** | 7 instructors, 9 rooms, 6 групи, 8 подгрупи, 14 offerings — **268 sessions** in семестър 1, **240** in семестър 2 | `OPTIMAL` in ~22 s and ~39 s: the проф. and the доц. take the two contested morning periods and the гл. ас. pays for every session — start here |
+   | **Full example** | 34 instructors, 23 rooms, 44 групи, 80 подгрупи, 91 offerings — **1832 sessions** in семестър 1, **1552** in семестър 2 | a genuinely hard instance: ~90 s to a first timetable, then it keeps improving |
 
-   The small one is the better first click: it solves instantly, fits on screen, and still shows a
-   real trade-off. The full one is what a faculty timetable actually looks like.
+   The small one is the better first click: it fits on screen and shows the ladder deciding an
+   outcome. The full one is what a faculty timetable actually looks like — four курса plus a
+   задочен, and it needs a minute or two to find its first legal timetable.
+
+   **Both datasets carry both semesters of 2025/2026** — семестър 1 teaches 15.09.2025–31.01.2026,
+   семестър 2 teaches 09.03.2026–27.06.2026 — and **a solve covers one of them**. Pick the semester
+   on the Generate screen; each keeps its own timetable, its own run and its own ladder, and
+   generating one leaves the other alone. The same 1 курс appears in both, as different курсове with
+   different групи: a група belongs to exactly one `CourseInstance`, so a cohort continuing into the
+   next semester is new rows. In the small example семестър 2 settles at a penalty of 512 against
+   семестър 1's 540, and the доц. pays 30 of it — the same three ranks, a different bargain.
+
+   **Обедната почивка is not a setting.** It is the 13:00→13:45 gap the period times leave between
+   period 3 and period 4 — a break defined by absence. Nothing can be scheduled across it because
+   no period covers it, and there is no rule anywhere in the model that says so.
 2. **Generate** — POSTs the whole problem to `/solve/stream`, which runs the identical solve and
    reports its own milestones as server-sent events: the model being built, then each rung of the
    priority ladder starting, improving and settling, and finally the same `SolveResponse` that
    `/solve` returns in one piece. That is what drives the progress bar — the ladder's phase count is
    fixed before the search starts, so the bar only ever moves forwards. A server without the
    streaming endpoint falls back to plain `/solve`. Several semesters can be generated at once; each
-   run gets its own row on the Generate screen. The small example comes back `OPTIMAL`
-   almost immediately. The full one is a genuinely hard instance: within the default 30 s budget
-   CP-SAT returns a valid, good schedule — every session placed, all hard rules verified — but often
-   with status **FEASIBLE**, because it cannot *prove* optimality in the time. That distinction is
-   the point, and it is what real timetabling looks like; give it longer in Settings to improve the
-   objective.
-3. **Timetable** — days as columns, periods as rows. The teacher shown on a card is the one the
-   solver *chose* out of that subject's pool (open *Data setup → Subjects → Edit* to see the
-   multi-selects for allowed room types and candidate teachers). Switch the lens between **by group / by teacher /
-   by room** and pick an entity; all three lenses filter the same `assignments` array, so they cannot
-   disagree. Colour by subject or room type, toggle density, export CSV.
-4. **Break it** — two easy ways:
-   - *Data setup → Time slots →* **Remove period** until only one period a day remains. Recruit
-     Class A needs 7 sessions and only 5 slots exist → `INFEASIBLE`, with that named as the reason.
-   - *Data setup → Time slots →* switch **Wed** off in the teaching-days row. The column and every
-     Wednesday date go with it, and any teacher preference on that weekday is dropped after a prompt
-     naming the count. Switch it back on and it returns to its own column, between Tue and Thu.
-   - *Data setup → Time slots →* block cells (e.g. the whole Period 1 row). Blocked slots are excluded
-     from solving; block enough and the problem becomes impossible. Block just a few and watch the
-     soft penalty rise instead — Sgt. Bergstrom prefers period-1 slots, so blocking that row costs
-     3 preference violations and the cards get a dashed edge and an amber marker.
-5. **Move a session by hand** — drag a card to another cell of the week on screen, or select it and
+   run gets its own row on the Generate screen. The small example comes back `OPTIMAL` in about
+   twenty-five seconds. The full one is a genuinely hard instance: it takes **a minute or two**
+   just to find its first legal timetable, and then keeps improving it rung by rung. **The default
+   time limit is Unlimited**, so it runs until it has settled every rank it can — which is why the
+   progress bar and the live clock exist. Set a limit in Settings if you would rather have an answer
+   at a fixed moment: what comes back is **FEASIBLE** rather than `OPTIMAL`, every session placed
+   and every hard rule verified but not *proven* best. That distinction is the point, and it is what
+   real timetabling looks like.
+3. **Timetable** — days as columns, periods as rows. A card shows the subject code and
+   its activity marker (л / у / п), and the teacher on it is the one the solver *chose* out of that
+   offering's pool (open *Data setup → Учебен план → Edit* to see the хорариум, the поток and the
+   candidate teachers). A подгрупа session names its подгрупа rather than the whole група. Switch
+   the lens between **by group / by teacher / by room**; all three filter the same `assignments`
+   array, so they cannot disagree. Colour by subject or room type, toggle density, export CSV.
+4. **Разписание** — the printed document, one per курс: approval header, numbered дисциплини with
+   хорариум, разпределение на учебното време, изпитни дати, then the month grid whose cells carry
+   the subject's number and its activity marker. Rendered by the solver (`POST /razpisanie`) and
+   shown in a frame with a Print button; the JSON stays the machine-readable form.
+5. **Break it** — several easy ways:
+   - *Data setup → Teachers →* narrow **хон. преп. Радева**'s availability from five periods to one.
+     Unlike a preference, this is HARD: the problem does not get more expensive, it becomes
+     `INFEASIBLE` and the hint names her.
+   - *Data setup → Time slots →* switch **Sat** off in the teaching-days row. The column and every
+     Saturday date go with it, and any preference or availability window on that weekday is dropped
+     after a prompt naming the count. Switch it back on and it returns to its own column.
+   - *Data setup → Time slots →* block cells. Block enough and the problem becomes impossible;
+     block a few and watch the soft penalty rise instead.
+   - *Data setup → Курсове →* drop **Max periods a day** to 2. The groups' days compact, and past a
+     point there is nowhere left to put the load.
+6. **Move a session by hand** — drag a card to another cell of the week on screen, or select it and
    use *Move to another week* in the Session panel to pick a week, day and period. Moves are never
-   refused: one that double-books a teacher, room or group — or lands on a blocked cell, a date a
-   group is not in term, or a week already at its even-spread ceiling — is accepted and then flagged,
+   refused: one that double-books a teacher, room, група or подгрупа — or lands on a blocked period,
+   a date a курс is not in term, a day already at its period cap, a period outside a хоноруван
+   преподавател's availability, or a week already at its even-spread ceiling — is accepted and then flagged,
    with a red ring on the cards and the reasons under the Session panel's verification badge. The
    solver's own figures above it keep describing the *run*, not the edited grid, and a moved card
    keeps the preference flags it was given. Generate is the reset: hand edits do not survive it.
-6. **Tinker** — the *Settings* button on the Generate tab opens the solver settings dialog.
+7. **Tinker** — the *Settings* button on the Generate tab opens the solver settings dialog.
    - **Stop at first solution.** Returns a legal-but-bad timetable instead of the optimum. On the
-     small example: penalty 182 in 0.8 s, against 12 in ~4 s.
-   - **Priority.** Open *Data setup → Teachers*, give a junior instructor a *Priority weight* above
-     a senior one's, and re-generate: the ladder reorders and the contested room changes hands. The
-     ladder panel on the Generate tab shows each rank in turn and what it had to give up.
+     small example: **FEASIBLE at penalty 1933** in ~15 s, against **OPTIMAL at 540** in ~25 s.
+   - **Priority.** The small example is built around this. проф. Стоянов, доц. Ковачева and
+     гл. ас. Илиев all teach 1 курс and all three want the same two morning periods, `mon-1` and
+     `wed-1`; the поток cannot be in two places at once, so exactly two of them can be satisfied.
+     The ladder gives them to the проф. and the доц., and the гл. ас. pays for all 54 of his
+     sessions. Open *Data setup → Teachers*, give гл. ас. Илиев a *Priority weight* above 7 and
+     re-generate: the ladder reorders and the проф. is the one who pays. The ladder panel on the
+     Generate tab shows each rank in turn and what it had to give up.
+   - **Availability.** Narrow хон. преп. Радева's availability from five periods to one. Unlike a
+     preference this is hard, so the problem does not get more expensive — it becomes `INFEASIBLE`
+     and the hint names her.
    - **Gap weight** is deliberately *not* a demonstration any more — see the table below for why.
-7. Every successful solve is **re-checked independently** of the model (`validate_assignments`) and the
+8. Every successful solve is **re-checked independently** of the model (`validate_assignments`) and the
    result shown as *All hard rules verified*. That badge is what makes "the solver produced a valid
    timetable" a claim you can check rather than trust — and once a session is moved by hand, the
    frontend re-runs the same rules and the badge starts reporting the grid instead of the run.
@@ -116,22 +146,22 @@ plain-language explanation on hover or keyboard focus — no CP-SAT vocabulary r
 
 | Setting | Effect on the seed dataset |
 |---|---|
-| Time limit | **Default 30 s**, up to unlimited. The full seed is hard enough to use every second it is given, so this one binds — more time buys a better objective, not a faster answer. |
-| Teacher preference weight (default 10) | Cost of a session outside a teacher's preferred slots. It trades against the room weight *within* a rank; it cannot trade across ranks. |
-| Room preference weight (default 5) | Cost per place down a teacher's ranked room list, scored per room type. Below the slot weight, so when both cannot be met the slot is the one kept. |
-| Gap weight (default 1) | **No longer a trade-off knob**, and the change is worth understanding: group gaps are the last rung of the priority ladder, so by the time they are considered every teacher rank is frozen at its best. On the small example the default gives **12 gap units**, and raising it to **10** gives the same 12 — it only scales the number, because nothing is left to trade against. Set it to `0` to stop reporting them. |
-| Stop at first solution | Collapses the ladder to one un-optimised solve. On the small example: **FEASIBLE at penalty 182** (17 preference misses, 5 room cost, 7 gaps) in **0.8 s**, against **OPTIMAL at 12** in ~4 s. The clearest demonstration of what optimising buys. |
+| Time limit | **Default Unlimited.** The solver runs until it finishes or proves optimality, so it always comes back with the best timetable it found. A budget short enough to feel like a demo is the trap: the full seed needs ~90 s just to find its *first* legal timetable, and a 30 s cap returns `UNKNOWN` with nothing placed. Set one when you need an answer at a fixed moment — the request stays open for the whole run either way. |
+| Teacher preference weight (default 10) | Cost of a session outside a teacher's preferred periods. It trades against the room weight *within* a rank; it cannot trade across ranks. |
+| Room preference weight (default 5) | Cost per place down a teacher's ranked room list, scored per room type. Below the period weight, so when both cannot be met the period is the one kept. |
+| Gap weight (default 1) | **No longer a trade-off knob**, and the change is worth understanding: group gaps are the last rung of the priority ladder, so by the time they are scored every teacher rank is frozen at its best. On the small example the gap rung still has enough freedom left to reach **zero gaps**, and raising the weight from 1 to 10 gives the same answer — the objective is identical at **540** either way. It cannot buy a compact day at the price of a preference, because by then there is nothing left to trade against. Set it to `0` to stop reporting gaps. |
+| Stop at first solution | Collapses the ladder to one un-optimised solve. On the small example: **FEASIBLE at penalty 1933** (186 preference misses, 20 room cost, 53 gaps) in **~15 s**, against **OPTIMAL at 540** in **~25 s**. The clearest demonstration of what optimising buys. |
 
 **B · Search** (collapsed by default) — same answer, different amount of work:
 
 | Setting | Effect on the seed dataset |
 |---|---|
-| Parallel workers (default 8) | 8 workers: ~520 branches, 0 conflicts. 1 worker: ~18,600 branches, 46 conflicts. Set to 1 for reproducible runs. |
+| Parallel workers (default 8) | On the small example, 8 workers prove the optimum (540) in ~27 s and 1 worker takes ~42 s to reach the same answer. Set it to 1 for reproducible runs — with a fixed seed the same problem returns the same timetable, which a test asserts. |
 | Random seed | Only meaningful with a single worker; changes which of several equally optimal timetables you get. |
-| Presolve (default on) | Off is *faster* here (197 ms vs 299 ms) — this model is too small for presolve to pay for itself. |
-| Symmetry detection | `0` barely moves the needle (255 ms, 400 branches). |
+| Presolve (default on) | Now that a semester is thousands of sessions, presolve pays for itself: the small example reaches the same optimum in ~27 s with it and ~47 s without. |
+| Symmetry detection | Left unset by default, and forced to `0` inside the ladder: CP-SAT's symmetry presolve fixes literals in each orbit, which turns the previous rung's solution hint from "complete and feasible" into "infeasible, we will try to repair it" — and on a hard instance the hint matters far more. |
 | Arithmetic reasoning | CP-SAT's linearization level. |
-| Our own symmetry shortcut | Our hand-written constraint forcing a subject's sessions into time order. Turning it off still reaches the same optimum — CP-SAT's presolve finds dozens of symmetry generators on its own, so this is a genuine open question the tab lets you measure. |
+| Our own symmetry shortcut | Our hand-written constraint forcing a series' sessions into period order. It does double duty: together with even spread it pins session *k* to a narrow band of weeks, which is applied when the variables are built. Turning it off reaches the same optimum on the small seed and costs a much larger model — the tab lets you measure it. |
 
 Settings are sent with every solve and echoed back as `settingsUsed`, so the Generate tab always
 describes a result by the settings it was actually produced with — not by whatever is on screen now.
@@ -140,162 +170,182 @@ the whitelist: there is no passthrough of arbitrary solver proto fields.
 
 ## The model
 
-**Decision variables.** Each subject expands into one session instance per session it runs that
-semester, and each lands on a real date.
-A subject names a *set* of acceptable room types and a *pool* of candidate teachers, so when, where
-and who are all decisions. There is one boolean per `(session, slot, room, teacher)` quadruple:
+**Decision variables.** A `SubjectOffering` carries a **хорариум** — hours, not sessions. `30/15`
+means 30 лекционни and 15 упражнителни часа, and `sessions.build_series` turns that into *series* of
+interchangeable sessions: one series for the offering's лекции (attended by the whole **поток**) and
+one **per unit** for its упражнения, because the хорариум is what one student is owed rather than
+what the катедра delivers once. Each session lands on a real dated period.
+
+One boolean per `(session, period, room, teacher)` quadruple:
 
 ```
-x[s, t, r, k] == 1   <=>   session s runs in slot t, in room r, taught by k
+x[s, t, r, k] == 1   <=>   session s runs in period t, in room r, taught by k
 ```
 
 The set is **pruned at construction** — a room only gets variables for a session if its type is one
-the subject accepts *and* its capacity covers every group in the session. Two hard constraints are
-therefore structural rather than posted as constraints.
+the *activity* accepts and its capacity covers the audience, and a teacher only gets one for a period
+inside their hard availability. Three hard constraints are therefore structural rather than posted.
 
-Carrying the teacher in the variable index is what makes the pool work: the session's
-"happens exactly once" constraint already ranges over teacher-tagged literals, so **"exactly one
-teacher out of the pool" needs no constraint of its own** — it falls out of that one. The solver is
-free to give two sessions of the same subject to different candidates.
+Carrying the teacher in the variable index is what makes the pool work: the session's "happens
+exactly once" constraint already ranges over teacher-tagged literals, so **"exactly one teacher out
+of the pool" needs no constraint of its own**. A лекция has a single **водещ преподавател**, which is
+simply a pool of one, so the same machinery covers both.
+
+**The teaching day.** A period is a block of two academic hours, and it is the atomic unit — there is
+no finer thing to place. Six of them make the twelve academic hours a учебен план counts in. The
+**обедна почивка needs no representation at all**: it is the 13:00→13:45 gap the period times leave
+between period 3 and period 4, and nothing can be scheduled across it because no period covers it. A
+faculty whose lunch falls elsewhere moves its period times; there is no rule to edit.
 
 **Hard constraints**
 
 | Requirement | Encoding |
 |---|---|
-| Each subject scheduled exactly its semester total | `AddExactlyOne` per session instance |
-| Exactly one teacher per session, drawn from the subject's pool | implied by the same `AddExactlyOne` — no separate constraint |
-| No teacher teaches two sessions in one slot | `AddAtMostOne` per (teacher, slot), keyed on the literal's own candidate |
-| No group attends two sessions in one slot (all groups of a multi-group subject are busy) | `AddAtMostOne` per (group, slot) |
-| No room hosts two sessions in one slot | `AddAtMostOne` per (room, slot) |
-| Room type is one the subject accepts | structural (pruned variables) |
-| Room capacity ≥ total size of the session's groups | structural (pruned variables) |
+| Each series scheduled exactly its хорариум | `AddExactlyOne` per session instance |
+| Exactly one teacher per session, drawn from the pool | implied by the same `AddExactlyOne` — no separate constraint |
+| No teacher teaches two sessions in one period | `AddAtMostOne` per (teacher, period) |
+| No група attends two sessions in one period, and a група-level session excludes every подгрупа of it | `AddAtMostOne` per (група, period, подгрупа) |
+| No подгрупа attends two sessions in one period | `AddAtMostOne` per (подгрупа, period) |
+| A room hosts at most `maxConcurrentGroups` sessions in one period | `AddAtMostOne`, or a counting constraint above 1 |
+| Room type is one the activity accepts | structural (pruned variables) |
+| Room capacity ≥ the audience — подгрупа size for a подгрупа session, the whole поток for a лекция | structural (pruned variables) |
+| A teacher is only scheduled inside their `hardAvailability` | structural (pruned variables) |
+| Even weekly spread | floor/ceil per ISO week, per series |
+| No група exceeds its курс's `maxPeriodsPerDay` | counting constraint over the group's busy literals |
+| No teacher exceeds `maxWeeklyPeriods` | counting constraint per (teacher, ISO week) |
 
-Sessions of the same subject are interchangeable, so a `slot_index` integer is channelled from the
-booleans and forced strictly increasing across a subject's sessions — symmetry breaking that keeps the
-search from re-exploring permutations of the same schedule. It earns much more here than it did over
-a single week, and it does double duty: together with the even-spread constraint it pins session *k* to
-a narrow band of weeks, which is applied when the variables are built rather than only as a constraint.
-That pruning is what makes a semester affordable — on the full seed it is the difference between
-~718,000 booleans and roughly ten million.
+**Групи, подгрупи and потоци.** Two rules pull against each other, and the second is the whole point
+of splitting a група: a **група-level session excludes every подгрупа of that група**, but **two
+подгрупи of one група may be taught at the same time** — гр. 1а at стрелбището while гр. 1б is in АЕ.
+A single `AtMostOne` over "everything the група could be doing" would satisfy the first and break the
+second, so the constraint is posted once per (група, period, подгрупа) instead. A подгрупа session
+still busies its parent група for the daily cap and for the gap objective, where two подгрупи side by
+side cost the група one period of its day rather than two.
 
-**Even spread.** Each subject's sessions are distributed across the teaching weeks of its window, every
-week carrying between `floor(N/W)` and `ceil(N/W)` of them. This is what "spread evenly" means once
-sessions are dated, and being hard it can make a problem infeasible — `diagnostics.py` names the
-subject when it does.
+A **поток** is `SubjectOffering.streamGroupIds` — a join, not an attribute of the курс, because
+общообразователните дисциплини merge групи across специалности and специалните do not.
 
-**The calendar.** A timetable is generated for one **semester**, identified by academic year and
-index (`2025/2026`, semester 1). The *dates* are per group: each group carries its own start and end
-for a semester, plus any breaks, so two cohorts can run the same term on different calendars. The
-weekday × period template defines which weekdays are taught, when each period runs, and how many
-there are; `blockedSlots` still blocks a period on that weekday *every* week; the frontend expands that template across the semester's real dates, and slots
-falling on a break simply do not exist.
+**The calendar.** A timetable is generated for one **semester**, and one solve covers *every* курс in
+it: rooms and teachers are shared, and solving курсове one at a time would double-book both. The
+dates live on the `CourseInstance`, not on the група — a курс on **стаж** in November runs a
+different calendar from its neighbours, which is exactly why they moved up. Non-teaching stretches are
+typed (ваканция, стаж, изпитна сесия, празник); all four are equally unusable for teaching, and they
+are kept apart so the разписание can print them and section II can count each изпитна сесия
+separately.
 
-A subject declares a **total for the semester** rather than a weekly rate — sessions land on real
-dates, so nothing has to divide evenly — and whether they spread across the whole term or across a
-period chosen inside it. It also declares **which groups attend, per semester**: the cohort lives on
-the semester entry, not on the subject, so the same subject can run for one set of groups in the
-autumn and another in the spring. Sessions may only use dates on which **every** one of that
-semester's groups is in term: the intersection, because a multi-group session busies all of them at
-once.
+Sessions may only use dates on which **every** група of the session is in term: the intersection,
+because a поток session busies all of them at once.
+
+**Spread.** `whole` and `range` distribute a series across the teaching weeks of its window, every
+week carrying between `floor(N/W)` and `ceil(N/W)` sessions. **`block`** does not, and that is what
+задочната форма needs: a whole semester compressed into a two- or three-week присъствен период has no
+even spread to find, so the window is saturated instead — no weekly floor, no ceiling, and no
+week-band pruning either, since that pruning is only sound while the ceiling is one.
+
+That pruning is worth understanding, because it is what makes a semester affordable: together with
+even spread and symmetry breaking it pins session *k* of a series to a narrow band of weeks, applied
+when the variables are built rather than only as a constraint. It also means a хорариум should divide
+by its **курс's own** teaching weeks — a курс on стаж teaches sixteen weeks, and a хорариум sized for
+eighteen asks for two sessions in some week, which widens every band and multiplies the model.
+`shared/generate_seed.py` sizes hours per курс for exactly that reason.
 
 **Soft constraints, and the priority ladder**
 
-Teachers carry an academic rank (`role`), and rank decides who wins a contested slot or room. This is
-**not** a weighted trade-off: the solver optimises one rank at a time, highest first, and freezes each
-rank's result before the next one bargains. A професор's preference is never sold to satisfy any
-number of асистенти — a guarantee no choice of weights can express.
+Unchanged by the restructure, and still the interesting part. Teachers carry an academic rank
+(`role`), and rank decides who wins a contested period or room. This is **not** a weighted trade-off:
+the solver optimises one rank at a time, highest first, and freezes each rank's result before the
+next one bargains. A професор's preference is never sold to satisfy any number of асистенти — a
+guarantee no choice of weights can express.
 
 - **Rank → tier.** Ranks are **data, not code**: a request carries a `roles` array of
-  `{id, name, short, weight}`, edited under *Data setup → Roles*, so a faculty can name the ranks it
-  actually has and decide what outranks what. The weights are *tier keys, not multipliers*: only
-  their ordering and which ranks share a value matter, and ranks sharing a weight share a tier and
-  trade freely with each other. `priorityWeight` on a teacher overrides their rank's weight, and is
-  the only way to move one person without inventing a rank for them. A teacher with no rank — or one
-  naming a rank that has since been deleted — shares the bottom tier, so a problem with no roles at
-  all behaves exactly as it did before the ladder existed.
-
-  A request that omits `roles` falls back to the six Bulgarian ranks in `DEFAULT_ROLES`
-  (`solver/app/models.py`), whose ids are the values the old fixed enum used — so every existing
-  caller keeps its ranking without changing anything.
-- **Slot preference:** a session outside its teacher's `preferredSlots` costs `preferenceWeight = 10`.
-  Because *which* teacher is itself a decision, the penalty is a property of the literal, not of the
-  session — picking a candidate who likes that slot is cheaper.
+  `{id, name, short, weight}`, edited under *Data setup → Roles*. The weights are *tier keys, not
+  multipliers*: only their ordering and which ranks share a value matter. `priorityWeight` on a
+  teacher overrides their rank's weight. A teacher with no rank shares the bottom tier, so a problem
+  with no roles at all behaves exactly as it did before the ladder existed. A request that omits
+  `roles` falls back to the seven ranks in `DEFAULT_ROLES`.
+- **Period preference:** a session outside its teacher's `preferredSlots` costs
+  `preferenceWeight = 10`. The keys are weekday-keyed (`mon-1`), so a preference means that period
+  *every* week. Because
+  *which* teacher is itself a decision, the penalty is a property of the literal, not of the session.
 - **Room preference:** `preferredRooms` is **ranked** — first choice free, each place further down
   costs `roomPreferenceWeight = 5` again, and a room not on the list costs one step worse than the
-  last named choice. Ranking is scored **per room type**: which types a session may use is a hard
-  constraint, so ranking two полигона says nothing about which стрелбище you get, and a teacher is
-  never billed for a type they expressed no opinion about. An empty list can never be violated.
-- **Group day-gaps:** a free period with teaching on both sides of it, in the same group's day, costs
-  `gapWeight = 1`. This is the **last rung**, after every teacher rank. A consequence worth stating:
-  `gapWeight` can no longer buy a compact day at the price of a teacher preference, because by the
-  time gaps are considered every teacher tier is already frozen. It orders solutions within the gap
-  stage only.
+  last named choice. Ranking is scored **per room type**, so ranking two полигона says nothing about
+  which стрелбище you get.
+- **Group day-gaps:** a free period with teaching on both sides of it, in the same група's day, costs
+  `gapWeight = 1`. This is the **last rung**, after every teacher rank — so `gapWeight` can no longer
+  buy a compact day at the price of a teacher preference.
+
+**Hard availability is the line between a preference and a constraint.** `preferredSlots` is bought
+and sold by the objective; `hardAvailability` is not available at any price, because a хоноруван
+преподавател genuinely cannot be in the building. When it cannot be met the answer is `INFEASIBLE`
+with a name attached, not an expensive timetable.
 
 **Search.** The ladder runs as a sequence of solves against one model: a warm-up with no objective at
-all (which returns the instant it finds any legal timetable), then one phase per rank, then gaps. Each
-phase sets its own objective, and freezes the result with `Add(expr <= achieved)` before the next
-begins — a bound taken from a solution that demonstrably exists, so the model can never be made
-infeasible by its own ladder.
+all, then one phase per rank, then gaps. Each phase sets its own objective and freezes the result
+with `Add(expr <= achieved)` before the next begins — a bound taken from a solution that demonstrably
+exists, so the model can never be made infeasible by its own ladder.
 
 The warm-up is deliberately **not** rationed: a run has to *have* a timetable before optimising one
-means anything, and once it has one every later rung can only improve on it. That is what guarantees a
-solve always returns the best timetable it found, however little time it was given.
+means anything. Each rung then gets an even share of what is left, floored at the warm-up's own
+measured cost. When the remaining budget cannot afford another real rung the ladder stops there,
+which starves the *junior* ranks: the right way round. Rungs that never ran are reported as
+`NOT REACHED` rather than passed off as satisfied.
 
-Each rung then gets an even share of what is left, floored at the warm-up's own measured cost — the
-best available estimate of what this model's presolve costs, since a rung given less than that spends
-its whole slice in presolve and returns `UNKNOWN` having never searched. When the remaining budget
-cannot afford another real rung the ladder stops there, which starves the *junior* ranks: the right
-way round. Rungs that never ran are reported as `NOT REACHED` rather than being passed off as
-satisfied, and a rung that hit its limit at `FEASIBLE` says so — the ranks below it were frozen
-against a number it might have improved on, and that is exactly the situation the ladder exists to
-prevent, so it is surfaced rather than buried.
+On the full seed, finding a first timetable takes a minute or two; the small example finishes the
+whole ladder in about twenty-five seconds.
 
-On the four-year seed, presolve alone is ~6s and finding a first timetable ~6s, so a 30s budget
-settles the top rank or two and leaves the rest `NOT REACHED`; more time settles more of them. The
-small example finishes the whole ladder in ~3s.
-
-`maxTimeInSeconds` defaults to 30 s and has **no ceiling**; the Settings dialog offers
-10 s / 30 s / 2 min / 20 min presets, a free-form box, and **Unlimited**. Unlimited is `null` on the
-wire and means CP-SAT is handed no deadline at all: it runs until it finishes or proves optimality,
-which is the only way a faculty-sized instance is ever proven. The cost is real and deliberate — the
-HTTP request stays open for the whole run, holding a worker, and nothing short of restarting the
-service will stop it. A running solve shows a live elapsed clock. 8
-workers. `OPTIMAL` and `FEASIBLE` are reported distinctly: "proven minimum penalty" and "best found
-inside the time limit" are different claims. A timeout with nothing found is `UNKNOWN`, never
-`INFEASIBLE`.
+`maxTimeInSeconds` **defaults to `null` — no deadline at all** — and has no ceiling either. The
+Settings dialog offers 10 s / 30 s / 2 min / 20 min presets and a free-form box for when a fixed
+answer time matters more than a good answer. The default is unlimited because the alternative is
+worse: a budget that expires before the warm-up finds anything returns `UNKNOWN` with nothing
+placed, and a slow timetable beats no timetable. The cost is real and deliberate — the HTTP request
+stays open for the whole run, holding a worker, and nothing short of restarting the service will
+stop it.
 
 **Infeasibility.** CP-SAT says *infeasible*; it does not say *why*. `solver/app/diagnostics.py` runs
-cheap counting checks and reports the over-subscribed resource: a subject no room can hold, a group
-with more sessions than slots, total sessions vs total room-slots, and — for rooms and teachers —
-Hall's condition over the type-sets and candidate pools that actually appear in the data. That last
-part matters once pools exist: sessions whose pool fits inside some set of teachers can only be taught
-by that set, so the check blames the pool collectively instead of blaming one teacher for work a
-colleague could take. These are necessary conditions only — when none fires, the response says so
-instead of inventing a reason.
+cheap counting checks and reports the over-subscribed resource: an offering no room can hold, a група
+with more sessions than its курс has periods for, total sessions vs total room-periods, and — for
+rooms and teachers — Hall's condition over the type-sets and candidate pools that actually appear in
+the data. Teacher supply counts **availability windows and weekly caps**, so a хоноруван
+преподавател with six periods a week is not credited with the whole calendar. These are necessary
+conditions only — when none fires, the response says so instead of inventing a reason.
+
+**The разписание.** `POST /razpisanie` takes a problem and the answer that came back and returns the
+document the faculty actually issues, one per `CourseInstance`: approval header, numbered
+дисциплини with хорариум and зали, разпределение на учебното време, изпитни дати, then a month grid
+whose cells carry the subject's number and its activity marker. It never re-solves — it is a view of
+a `SolveResponse` that already exists. Membership is decided by **attendance**, not ownership, so a
+merged общообразователна лекция appears on the разписание of every курс in its поток.
 
 ---
 
 ## What this tests
 
-That CP-SAT can express the hard/soft constraint structure of a real university timetable, solve it
-fast at small scale, and fail *informatively* rather than hanging. What it does **not** cover, versus
-the full requirement:
+That CP-SAT can express the hard/soft constraint structure of a real Bulgarian academy timetable —
+поток лекции, per-подгрупа упражнения, a six-day week, hard availability for external staff,
+задочна форма — solve it at faculty scale, and fail *informatively* rather than hanging.
 
-- **No потоци / streams** — no lecture-stream hierarchy above groups.
-- **No split-group-per-subject** — a subject cannot fan a group into lab subgroups; a session is one
-  room for the whole group set.
-- **No co-teaching** — a subject's teacher list is a pool of candidates, exactly one of whom takes
-  each session. There is no way to say "both of these instructors attend together".
+What it does **not** cover:
+
+- **No co-teaching** — an offering's `exerciseTeacherIds` is a pool of candidates, exactly one of
+  whom takes each session. There is no way to say "both of these instructors attend together".
 - **No cross-semester optimisation** — semesters are generated one at a time and stored separately;
-  the solver never balances one term against another.
-- **No teacher hard availability** — a teacher's unavailability can only be expressed globally, by
-  blocking a slot for everyone. Per-teacher preferences are soft, and stay soft however senior the
-  teacher: rank decides who wins a contested slot or room, never whether the session happens.
-- **No session length or double-period blocking** — every session is exactly one period. Periods
-  carry real clock times, and must run in order without overlapping, but the solver only ever sees
-  the period *number*: two adjacent periods are never merged into one long session.
-- **No room adjacency, travel time, or building constraints.**
-- **No persistence** — state lives in the browser and is POSTed in full on every solve.
+  the solver never balances one term against another. A група belongs to one `CourseInstance`, so a
+  cohort continuing into the next semester is new rows rather than a second entry on the same one.
+  Both seeds ship the two semesters of 2025/2026, so this is something to look at rather than take
+  on trust: the same 1 курс, twice, sharing every преподавател and every зала and nothing else.
+- **No room adjacency, travel time, or building constraints** — a курс can be sent from the стрелбище
+  to a зала in consecutive periods with no allowance for the walk.
+- **No teacher day-compaction** — gaps are penalised for групи only. A преподавател with a
+  first-period and a last-period session and nothing between them pays nothing for it.
+- **No session longer than one period** — a session occupies exactly one period, and
+  `hoursPerSession` only sets the divisor that turns a хорариум into a count. A four-hour полигон
+  block spanning two consecutive periods cannot be expressed.
+- **"Never a single academic hour" is a data convention, not a model rule** — a period is two
+  academic hours because the period times say so. Define a 45-minute period and the solver will
+  happily schedule single hours into it.
+- **No persistence** — state lives in the browser and is POSTed in full on every solve. A reload
+  loses the problem.
 
 ---
 
@@ -303,22 +353,31 @@ the full requirement:
 
 ```
 solver/app/timetable_solver.py   the CP-SAT model + independent output validator
-solver/app/diagnostics.py        infeasibility hints
+solver/app/sessions.py           хорариум -> session series
+solver/app/diagnostics.py        reference checks and infeasibility hints
+solver/app/razpisanie.py         the printed document, and its HTML
 solver/app/models.py             the whole wire format
-solver/app/main.py               FastAPI (/health, /solve, /solve/stream)
-solver/tests/test_solver.py      feasibility, validity, infeasibility, soft-constraint tests
+solver/app/main.py               FastAPI (/health, /solve, /solve/stream, /razpisanie)
+solver/tests/test_solver.py      feasibility, validity, infeasibility, the ladder
+solver/tests/test_periods.py     the teaching day, обедна почивка, Saturday, the daily cap
+solver/tests/test_hierarchy.py   групи, подгрупи and потоци
+solver/tests/test_teachers.py    hard availability, weekly caps, водещ преподавател
+solver/tests/test_spread.py      whole / range / block
+solver/tests/test_razpisanie.py  the document agrees with the timetable
+solver/tests/test_semesters.py   two semesters in one file, one per solve
 shared/seed-small.json           the small example — also the default test fixture
-shared/seed-full.json            the full four-year faculty example
+shared/seed-full.json            the full faculty example
 shared/generate_seed.py          regenerates the full one (YEARS / N_PPOOR / N_GP knobs)
-frontend/src/                    React UI (DataScreen / GenerateScreen / ResultScreen)
+MIGRATION.md                     every field renamed, moved or dropped in the restructure
+frontend/src/                    React UI (Data setup / Generate / Timetable / Разписание)
 frontend/src/styles/ds/          design tokens vendored from the Claude Design project
 ```
 
 ### A note on the seed data
 
-Both datasets model **Факултет "Полиция"** at the **Академия на МВР** (Sofia) — the small one a
-single курс, the full one all four years. Be clear about which parts are researched and which are
-modelled:
+Both datasets model **Факултет "Полиция"** at the **Академия на МВР** (Sofia) across both semesters
+of 2025/2026 — the small one a single курс, the full one all four курса plus a задочен. Be clear about which parts are researched
+and which are modelled:
 
 **From the Academy's own published material:**
 - It has two faculties — Факултет "Полиция" and Факултет "Пожарна безопасност и защита на
@@ -329,19 +388,32 @@ modelled:
 - Cadets are admitted to three bachelor specialties — "Противодействие на престъпността и опазване на
   обществения ред", "Гранична полиция" and "Пожарна и аварийна безопасност". The first two belong to
   Факултет "Полиция" and appear here; the third belongs to ПБЗН and does not.
-- The academic ranks used (проф. д-р, доц. д-р, гл. ас. д-р, ст. преп., ас.).
+- The academic ranks used (проф. д-р, доц. д-р, гл. ас. д-р, ас., ст. преп., преп., хон. преп.).
 
 **Modelled, not cited:**
 - **Group sizes.** The Academy does not publish enrolment figures, and none were reachable. Groups
   are the standard Bulgarian учебна група of ~25, with lectures delivered to the whole поток — about
   500 cadets across the faculty. Plausible, but a model rather than a number to quote.
-- **The curriculum split across years.** Subject names come from the real subject areas of the five
-  катедри; which year each falls in is a reasonable approximation, as учебните планове are not public.
+- **The учебен план.** Subject names come from the real subject areas of the катедри; which year
+  each falls in, and the хорариум attached to it, are reasonable approximations — учебните планове
+  are not public. The same goes for which дисциплини are общообразователни (and so merge both
+  специалности into one поток) and which are специални.
+- **The подгрупи.** Splitting a група in half for стрелкова подготовка and ЛЗФП, and by level for
+  чуждоезиково обучение, is how such training is organised; the exact split sizes are chosen, not
+  cited.
+- **The стаж and the задочен курс.** A November стаж for четвъртокурсниците and a three-week
+  присъствен период for the задочна форма are plausible shapes, included because they are what
+  per-курс calendars and `spread: block` exist for.
 - **Instructor names** are generic Bulgarian surnames, not Academy staff. Naming real employees in a
   demo dataset would be a privacy problem for no benefit.
-- **Room inventory.** Аудитории, учебни зали, компютърни зали, криминалистична лаборатория, физкултурен
-  салон, стрелбища and полигони are the kinds of facilities such an academy has; the counts and
-  capacities are chosen so the problem is solvable, not taken from a floor plan.
+- **Room inventory.** Аудитории, учебни зали, компютърни зали, криминалистична лаборатория,
+  физкултурен салон, тренажорна зала, стрелбища and полигони are the kinds of facilities such an
+  academy has; the counts and capacities are chosen so the problem is solvable, not taken from a
+  floor plan. The room vocabulary has no *лаборатория*, so the криминалистична лаборатория is
+  carried as a компютърна зала — see MIGRATION.md.
+- **The clock times.** Six 90-minute periods between 08:00 and 18:45 — twelve academic hours,
+  taught two at a time — with the обедна почивка as the 13:00–13:45 gap, is the shape of the
+  academy's day; the exact minute boundaries are chosen to fit it.
 
 Sources: [Академия на МВР](https://www.mvr.bg/academy) ·
 [Факултет "Полиция" — академичен състав](https://www.mvr.bg/academy/академията/факултет-полиция/академичен-състав) ·

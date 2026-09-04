@@ -5,7 +5,7 @@ import { RunProgress } from './RunProgress';
 import { StaleBanner } from './StaleBanner';
 import { Select } from './ds/Select';
 import { countNonDefault, formatLimit } from '../settings';
-import { semesterSlots, sessionsIn } from '../slots';
+import { offeringSessions, offeringsIn, semesterSlots } from '../slots';
 import { semesterKey } from '../types';
 import type {
   Problem,
@@ -61,20 +61,25 @@ export function GenerateScreen({
   onGoData,
 }: Props) {
   const changedCount = countNonDefault(settings);
-  // The dated slots this semester actually has, not the weekday template's 30 --
-  // a semester is weeks of them, and the template count would badly understate it.
+  // The dated periods this semester actually has, not the weekday template's 36
+  // -- a semester is weeks of them, and the template count would badly
+  // understate it.
   const open = semester
-    ? semesterSlots(problem.slotConfig, problem.groups, semester).length
+    ? semesterSlots(problem.slotConfig, problem.courseInstances, semester).length
     : 0;
   const sessions = semester
-    ? problem.subjects.reduce((n, s) => n + sessionsIn(s, semester), 0)
+    ? offeringsIn(problem.offerings, problem.courseInstances, semester).reduce(
+        (n, o) => n + offeringSessions(o),
+        0,
+      )
     : 0;
   const summary = [
     { value: problem.teachers.length, label: 'Teachers' },
     { value: problem.rooms.length, label: 'Rooms' },
-    { value: problem.groups.length, label: 'Groups' },
-    { value: problem.subjects.length, label: 'Subjects' },
-    { value: open, label: 'Open slots' },
+    { value: problem.groups.length, label: 'Групи' },
+    { value: problem.subgroups.length, label: 'Подгрупи' },
+    { value: problem.offerings.length, label: 'Offerings' },
+    { value: open, label: 'Open periods' },
     { value: sessions, label: 'Sessions needed' },
   ];
 
@@ -117,9 +122,11 @@ export function GenerateScreen({
           <div style={{ flex: '1 1 320px', minWidth: 0 }}>
             <div className="display-md">Run the scheduler</div>
             <div className="muted" style={{ marginTop: 4, maxWidth: 620 }}>
-              Hard rules: no teacher, group or room double-booked; the room type must match the
-              subject and hold every student; blocked slots are excluded. Teacher slot preferences
-              and compact group days are optimised, not guaranteed.
+              Hard rules: no teacher, група, подгрупа or room double-booked; a група-level
+              session excludes every подгрупа of that група; the room type must match the activity
+              and hold every student; хонорувани преподаватели are only scheduled inside their
+              availability; no група exceeds its курс's periods a day. Teacher period preferences,
+              ranked rooms and compact group days are optimised, not guaranteed.
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>

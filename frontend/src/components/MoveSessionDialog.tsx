@@ -11,10 +11,10 @@ interface Props {
   problem: Problem;
   semester: SemesterRef;
   weeks: { week: string; dates: string[] }[];
-  /** What moving to a candidate slot would break, so the dialog can say so
+  /** What moving to a candidate period would break, so the dialog can say so
    *  before the move rather than only after it. */
   conflictsAt: (date: string, period: number) => string[];
-  onMove: (slot: string, date: string) => void;
+  onMove: (period: number, date: string) => void;
   onClose: () => void;
 }
 
@@ -42,13 +42,13 @@ export function MoveSessionDialog({
   const current = weeks.findIndex((w) => w.dates.includes(assignment.date));
   const [weekIndex, setWeekIndex] = useState(Math.max(current, 0));
   const [date, setDate] = useState(assignment.date);
-  const [period, setPeriod] = useState(Number(assignment.slot.slice(11)));
+  const [period, setPeriod] = useState(assignment.period);
 
   const week = weeks[weekIndex];
   const dates = week?.dates ?? [];
   const target = dates.includes(date) ? date : (dates[0] ?? assignment.date);
   const warnings = conflictsAt(target, period);
-  const unchanged = target === assignment.date && period === Number(assignment.slot.slice(11));
+  const unchanged = target === assignment.date && period === assignment.period;
 
   return (
     <div className="modal__backdrop" onClick={onClose}>
@@ -63,7 +63,9 @@ export function MoveSessionDialog({
           <div>
             <div className="display-sm">Move {assignment.subjectName}</div>
             <div className="muted-sm">
-              {assignment.teacherName} · {assignment.groupNames.join(' · ')} · {assignment.roomName}
+              {assignment.activity} · {assignment.teacherName} ·{' '}
+              {assignment.subgroupName ?? assignment.groupNames.join(' · ')} ·{' '}
+              {assignment.roomName}
             </div>
           </div>
           <button className="linkbtn linkbtn--quiet" onClick={onClose}>
@@ -138,7 +140,7 @@ export function MoveSessionDialog({
           <Button
             variant="primary"
             disabled={unchanged}
-            onClick={() => onMove(`${target}-${period}`, target)}
+            onClick={() => onMove(period, target)}
           >
             Move session
           </Button>

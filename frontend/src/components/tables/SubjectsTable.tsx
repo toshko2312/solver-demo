@@ -1,36 +1,36 @@
-import { ROOM_TYPE_COLOR, ROOM_TYPE_LABEL, subjectColor } from '../../theme';
-import { semesterKey } from '../../types';
-import type { Group, Subject, Teacher } from '../../types';
+import { subjectColor } from '../../theme';
+import type { Katedra, Subject, SubjectOffering } from '../../types';
 
 interface Props {
   subjects: Subject[];
-  teachers: Teacher[];
-  groups: Group[];
+  katedri: Katedra[];
+  offerings: SubjectOffering[];
   subjectIds: string[];
   onEdit: (subject: Subject) => void;
   onDelete: (subjectId: string) => void;
 }
 
+/** The catalogue. What is *taught* is a SubjectOffering, so this table is short
+ *  on purpose: a code, a name, an owning катедра, and where it is taught. */
 export function SubjectsTable({
   subjects,
-  teachers,
-  groups,
+  katedri,
+  offerings,
   subjectIds,
   onEdit,
   onDelete,
 }: Props) {
-  const teacherName = (id: string) => teachers.find((t) => t.id === id)?.name ?? '(unknown)';
-  const groupName = (id: string) => groups.find((g) => g.id === id)?.name ?? '(unknown)';
+  const katedraName = (id?: string | null) => katedri.find((k) => k.id === id)?.name ?? '—';
 
   return (
     <div className="tablewrap">
       <table className="data-table">
         <thead>
           <tr>
-            <th>Subject</th>
-            <th>Room types</th>
-            <th>Semesters</th>
-            <th>Teachers</th>
+            <th>Код</th>
+            <th>Дисциплина</th>
+            <th>Катедра</th>
+            <th>Offerings</th>
             <th className="right">Actions</th>
           </tr>
         </thead>
@@ -43,65 +43,17 @@ export function SubjectsTable({
             </tr>
           )}
           {subjects.map((s) => {
+            const color = subjectColor(subjectIds, s.id);
+            const mine = offerings.filter((o) => o.subjectId === s.id);
             return (
               <tr key={s.id}>
                 <td className="name">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                    <span
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 3,
-                        flex: 'none',
-                        background: subjectColor(subjectIds, s.id).c,
-                      }}
-                    />
-                    <span>{s.name}</span>
-                  </div>
+                  <span className="dot" style={{ background: color.c }} />
+                  {s.code}
                 </td>
-                <td>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {s.allowedRoomTypes.map((t) => (
-                      <span
-                        key={t}
-                        className="badge"
-                        style={{ background: ROOM_TYPE_COLOR[t].tint, color: ROOM_TYPE_COLOR[t].ink }}
-                      >
-                        {ROOM_TYPE_LABEL[t]}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td>
-                  {s.semesters.length === 0 ? (
-                    <span className="muted-sm">—</span>
-                  ) : (
-                    // Groups belong to the semester, so they are shown with it
-                    // rather than in a column of their own -- a subject can run
-                    // for a different cohort in each term.
-                    s.semesters.map((x) => (
-                      <div key={semesterKey(x)} className="semcell">
-                        <span className="semcell__label">
-                          {x.academicYear} S{x.index}: {x.totalSessions}
-                        </span>
-                        {x.groupIds.map((gid) => (
-                          <span key={gid} className="badge badge--plain">
-                            {groupName(gid)}
-                          </span>
-                        ))}
-                      </div>
-                    ))
-                  )}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {s.teacherIds.map((id) => (
-                      <span key={id} className="badge badge--plain">
-                        {teacherName(id)}
-                      </span>
-                    ))}
-                  </div>
-                </td>
+                <td>{s.name}</td>
+                <td>{katedraName(s.katedraId)}</td>
+                <td className="num">{mine.length}</td>
                 <td className="right">
                   <button className="linkbtn" onClick={() => onEdit(s)}>
                     Edit

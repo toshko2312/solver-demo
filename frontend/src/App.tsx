@@ -2,17 +2,18 @@ import { useState } from 'react';
 
 import { DataScreen } from './components/DataScreen';
 import { GenerateScreen } from './components/GenerateScreen';
+import { RazpisanieScreen } from './components/RazpisanieScreen';
 import { ResultScreen } from './components/ResultScreen';
 import { Button } from './components/ds/Button';
 import { solveStream } from './api';
 import { SettingsDialog } from './components/SettingsDialog';
 import { emptyProblem, seedFull, seedSmall } from './seed';
 import { defaultSettings } from './settings';
-import { knownSemesters, sessionsIn } from './slots';
+import { knownSemesters, offeringSessions, offeringsIn, weekdayName } from './slots';
 import { semesterKey } from './types';
 import type { Problem, RunState, SemesterRef, SolveProgress, SolveResponse } from './types';
 
-type Screen = 'data' | 'generate' | 'result';
+type Screen = 'data' | 'generate' | 'result' | 'razpisanie';
 
 export function App() {
   // The whole problem lives here: no database, no server-side session. It is
@@ -35,12 +36,16 @@ export function App() {
   const [dataVersion, setDataVersion] = useState(0);
   const [resultVersions, setResultVersions] = useState<Record<string, number>>({});
 
-  const semesters = knownSemesters(problem.groups);
+  const semesters = knownSemesters(problem.courseInstances);
   // Default to the first semester that actually has sessions to place, not just
-  // the first on the calendar: a group can carry dates for a future year long
-  // before any subject runs in it, and defaulting there offers a solve of nothing.
+  // the first on the calendar: a курс can carry dates for a future year long
+  // before any offering runs in it, and defaulting there offers a solve of nothing.
   const firstWithWork =
-    semesters.find((x) => problem.subjects.some((s) => sessionsIn(s, x) > 0)) ?? semesters[0];
+    semesters.find((x) =>
+      offeringsIn(problem.offerings, problem.courseInstances, x).some(
+        (o) => offeringSessions(o) > 0,
+      ),
+    ) ?? semesters[0];
   const active = semester ?? firstWithWork ?? null;
   const activeKey = active ? semesterKey(active) : null;
   const result = activeKey ? (results[activeKey] ?? null) : null;
@@ -56,15 +61,20 @@ export function App() {
     ([key, state]) => state === 'solving' && key !== activeKey,
   ).length;
 
-  /** Move one session of the semester on screen to another slot.
+  /** Move one session of the semester on screen to another dated period.
    *
    *  A hand edit, not a data change: it must not go through `editProblem`, whose
    *  version bump would mark every semester's timetable stale, and it leaves
    *  `resultVersions` alone -- the input data has not moved, so the grid is not
    *  out of date with it. Regenerating is the reset; nothing here is undoable.
+   *
+   *  The slot id is derived from the date and the period, so all three move
+   *  together: a card whose id disagrees with its own date would fail the
+   *  independent re-check for a reason that has nothing to do with the move.
    */
-  const moveSession = (index: number, slot: string, date: string) => {
+  const moveSession = (index: number, period: number, date: string) => {
     if (!activeKey) return;
+    const day = weekdayName(date);
     setResults((prev) => {
       const stored = prev[activeKey];
       if (!stored) return prev;
@@ -72,7 +82,11 @@ export function App() {
         ...prev,
         [activeKey]: {
           ...stored,
-          assignments: stored.assignments.map((a, i) => (i === index ? { ...a, slot, date } : a)),
+          assignments: stored.assignments.map((a, i) =>
+            i === index
+              ? { ...a, date, day, period, slot: `${date}-${period}` }
+              : a,
+          ),
         },
       };
     });
@@ -188,7 +202,9 @@ export function App() {
       ? 'Input data — edits mark existing timetables stale'
       : screen === 'result'
         ? 'Generated result — regenerate to pick up data changes'
-        : 'Solver';
+        : screen === 'razpisanie'
+          ? 'Printable разписание — one document per курс'
+          : 'Solver';
 
   return (
     <div className="app">
@@ -220,6 +236,7 @@ export function App() {
             ['data', 'Data setup'],
             ['generate', 'Generate'],
             ['result', 'Timetable'],
+            ['razpisanie', 'Разписание'],
           ] as [Screen, string][]
         ).map(([key, label]) => (
           <button
@@ -281,6 +298,14 @@ export function App() {
           onGenerate={generate}
           onMoveSession={moveSession}
           onGoData={() => setScreen('data')}
+          onGoGenerate={() => setScreen('generate')}
+        />
+      )}
+      {screen === 'razpisanie' && (
+        <RazpisanieScreen
+          problem={problem}
+          semester={active}
+          result={result}
           onGoGenerate={() => setScreen('generate')}
         />
       )}

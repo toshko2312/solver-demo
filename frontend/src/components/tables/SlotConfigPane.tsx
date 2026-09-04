@@ -176,7 +176,11 @@ export function SlotConfigPane({ config, onChange, onRemoveDay, onRemovePeriod }
   return (
     <div className="slotgrid">
       <div className="slotgrid__legend">
-        <span>Click a cell to block it. Blocked slots are excluded from solving.</span>
+        <span>
+          Click a cell to block that period. Blocked periods are excluded from solving. The обедна
+          почивка is not a setting: it is the gap the period times leave, and nothing can be
+          scheduled across it because no period covers it.
+        </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span className="swatch" style={{ background: '#e9f1fb', boxShadow: '0 0 0 1px rgba(0,102,204,.35)' }} />
           Teaching
@@ -220,31 +224,43 @@ export function SlotConfigPane({ config, onChange, onRemoveDay, onRemovePeriod }
       {Array.from({ length: config.periods }, (_, i) => i + 1).map((period) => {
         const span = parsePeriodTime(draft[period - 1]);
         const bad = errors.get(period);
+        // The gap before this period, if the timetable leaves one. That gap is
+        // the обедна почивка -- there is nothing else to say about it.
+        const previous = parsePeriodTime(draft[period - 2] ?? BLANK);
+        const gap =
+          previous && span ? minutesOf(span.start) - minutesOf(previous.end) : 0;
         return (
-          <div key={period} className="slotgrid__row" style={{ gridTemplateColumns: columns }}>
-            <div className={`slotgrid__rowhead${bad ? ' slotgrid__rowhead--bad' : ''}`}>
-              <span className="grid__periodname">Period {period}</span>
-              <span className="slotgrid__times">
-                {bound(period, 'start', span?.start, 'starts')}
-                <span aria-hidden="true">–</span>
-                {bound(period, 'end', span?.end, 'ends')}
-              </span>
-              {bad && <span className="slotgrid__err">{bad}</span>}
+          <div key={period}>
+            {gap >= 30 && (
+              <div className="slotgrid__break">
+                {previous!.end}–{span!.start} · {gap} min between periods
+              </div>
+            )}
+            <div className="slotgrid__row" style={{ gridTemplateColumns: columns }}>
+              <div className={`slotgrid__rowhead${bad ? ' slotgrid__rowhead--bad' : ''}`}>
+                <span className="grid__periodname">Period {period}</span>
+                <span className="slotgrid__times">
+                  {bound(period, 'start', span?.start, 'starts')}
+                  <span aria-hidden="true">–</span>
+                  {bound(period, 'end', span?.end, 'ends')}
+                </span>
+                {bad && <span className="slotgrid__err">{bad}</span>}
+              </div>
+              {config.days.map((day) => {
+                const id = slotId(day, period);
+                const off = blocked.has(id);
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    className={`slotcell${off ? ' slotcell--blocked' : ''}`}
+                    onClick={() => toggle(id)}
+                  >
+                    {off ? 'Blocked' : 'Teaching'}
+                  </button>
+                );
+              })}
             </div>
-            {config.days.map((day) => {
-              const id = slotId(day, period);
-              const off = blocked.has(id);
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className={`slotcell${off ? ' slotcell--blocked' : ''}`}
-                  onClick={() => toggle(id)}
-                >
-                  {off ? 'Blocked' : 'Teaching'}
-                </button>
-              );
-            })}
           </div>
         );
       })}

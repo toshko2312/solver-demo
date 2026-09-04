@@ -371,7 +371,7 @@ table.data-table { width: 100%; border-collapse: collapse; min-width: 620px; }
 .grid__periodtime { font-size: 10px; color: #86868b; font-variant-numeric: tabular-nums; }
 .grid__cell { background: #fff; padding: 6px; display: flex; flex-direction: column; gap: 5px; overflow: hidden; min-width: 0; }
 .grid__cell--blocked { background: repeating-linear-gradient(135deg,#fafafc,#fafafc 5px,#f2f2f5 5px,#f2f2f5 10px); }
-/* Under a dragged session. The teaching-cell pair the slot grid's legend already
+/* Under a dragged session. The teaching-cell colours the slot grid's legend already
    documents, as an inset ring so the cell does not shift under the cursor. */
 .grid__cell--drop { background: #e9f1fb; box-shadow: inset 0 0 0 1px rgba(0,102,204,.35); }
 
@@ -586,3 +586,42 @@ table.data-table { width: 100%; border-collapse: collapse; min-width: 620px; }
 .semrow__break { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .semrow__break input { font: inherit; font-size: 12.5px; padding: 4px 7px; border-radius: 6px;
   border: 1px solid rgba(0,0,0,.12); background: #fff; }
+
+/* ---------------------------------------------------------------------------
+   The availability grid is not the preference grid: one is bought and sold by
+   the objective and the other cannot be. Solid, not dashed -- dashed means soft
+   everywhere else in this app.
+   --------------------------------------------------------------------------- */
+.prefgrid--hard .prefgrid__cell--on { background: #e8f4ec; border: 1px solid #1f7a3d; }
+
+/* A gap the period times leave between two periods -- the обедна почивка, and
+   any other break. It is drawn because it is invisible otherwise: nothing marks
+   it, because nothing enforces it. */
+.slotgrid__break {
+  margin: 2px 0 8px; padding: 5px 10px; border-radius: 6px;
+  font-size: 11px; letter-spacing: .03em; text-transform: uppercase; color: #8a4408;
+  background: #fbefe4;
+}
+
+.sesscard__marker { font-weight: 400; color: #6e6e73; }
+
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: baseline; }
+
+/* The offering form. Its two halves -- лекции and упражнения -- are separated by
+   eyebrow headings rather than boxes: they are one form, not two. */
+.offering { display: flex; flex-direction: column; gap: 16px; }
+.offering__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.offering__head { margin-top: 4px; padding-top: 14px; border-top: 1px solid rgba(0, 0, 0, .08); }
+
+/* ---------------------------------------------------------------------------
+   Разписание. The document itself is rendered server-side and shown in an
+   iframe, so almost nothing here styles its contents -- only the frame around
+   it and the picker above it.
+   --------------------------------------------------------------------------- */
+.razp { display: flex; flex-direction: column; gap: 14px; }
+.razp__bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.razp__bar .dd { min-width: 260px; }
+.razp__frame {
+  width: 100%; height: min(78vh, 900px);
+  border: 1px solid rgba(0, 0, 0, .12); border-radius: 12px; background: #fff;
+}

@@ -16,6 +16,7 @@ export function RoomsTable({ rooms, onEdit, onDelete }: Props) {
             <th>Room</th>
             <th>Type</th>
             <th>Capacity</th>
+            <th>At once</th>
             <th>Building</th>
             <th className="right">Actions</th>
           </tr>
@@ -23,7 +24,7 @@ export function RoomsTable({ rooms, onEdit, onDelete }: Props) {
         <tbody>
           {rooms.length === 0 && (
             <tr>
-              <td colSpan={5} className="empty-row">
+              <td colSpan={6} className="empty-row">
                 No rooms yet.
               </td>
             </tr>
@@ -39,6 +40,7 @@ export function RoomsTable({ rooms, onEdit, onDelete }: Props) {
                   </span>
                 </td>
                 <td className="num">{r.capacity}</td>
+                <td className="num">{r.maxConcurrentGroups}</td>
                 <td>{r.building ?? '—'}</td>
                 <td className="right">
                   <button className="linkbtn" onClick={() => onEdit(r)}>

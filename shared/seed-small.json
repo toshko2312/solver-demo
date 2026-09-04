@@ -1,12 +1,13 @@
 {
-  "_comment": "Small example: one курс of Факултет \"Полиция\", Академия на МВР. Same vocabulary and structure as seed-full.json (потоци lectures, per-group упражнения, instructor pools, all five room types) at a size that solves in seconds and stays readable in the weekly grid. It is tuned to make the two soft constraints trade against each other visibly. The instructors are split into an early camp (periods 1-2) and a late camp (period 6 only, so two late sessions can never sit adjacent), and every group is taught by both. At the default weights (preferenceWeight 10, gapWeight 1) honouring the preferences is cheaper than closing a hole -- a day running 1st, 2nd and 6th period costs 3 gap units but no preference miss -- so the timetable comes back with roughly 12 gap units across three split days and nothing flagged. Raise gapWeight to 10 in the Settings dialog and the arithmetic flips: the days compact to zero gaps and three teacher preferences get traded away instead. That before/after is the point of this dataset.",
+  "_comment": "Small example: 1 курс of Факултет \"Полиция\", Академия на МВР -- поток лекции, per-group упражнения, подгрупи for стрелкова подготовка and чуждоезиково обучение, and one хоноруван преподавател with a HARD availability window, at a size that solves in seconds and stays readable in the weekly grid.\n\nThe day is six periods of 90 minutes on a six-day week, each period two academic hours -- so a day is the twelve academic hours a учебен план counts in. Обедната почивка is the 13:00-13:45 gap between period 3 and period 4. It is not a setting and not a rule: it is simply a stretch of clock that no period covers, so nothing can be scheduled across it.\n\nWHAT IT DEMONSTRATES -- the priority ladder. проф. Стоянов, доц. Ковачева and гл. ас. Илиев all teach 1 курс and all three want the same two morning periods, mon-1 and wed-1. The поток cannot be in two places at once, so exactly two of the three can be satisfied. The ladder settles them top down and freezes each rank before the next bargains: the проф. takes one, the доц. takes the other, and the гл. ас. pays for every session -- and no amount of his lost preference can ever buy back one of theirs. Open Data setup -> Teachers, give гл. ас. Илиев a Priority weight above 7 and re-generate: the ladder reorders and the проф. is the one who pays.\n\nWHAT gapWeight NO LONGER DOES. Group gaps are the last rung of that ladder, so by the time they are scored every teacher rank is already frozen at its best -- and on this dataset the gap rung still has enough freedom left to reach zero, so the timetable comes back with no gaps at all. Raising gapWeight from 1 to 10 changes nothing: it cannot buy a compact day at the price of a preference, because by then there is nothing left to trade against. That is the ladder working, not the gap objective failing.\n\nхон. преп. Радева is the other thing to try. Her availability is five periods a week and it is HARD, not a preference: narrow it in Data setup -> Teachers and the problem does not get more expensive, it becomes INFEASIBLE and names her as the reason.\n\nBOTH SEMESTERS of 2025/2026 are in the file, and one solve covers one of them. Семестър 1 се преподава 15.09.2025 - 31.01.2026, семестър 2 -- 09.03.2026 - 27.06.2026, след поправителната сесия на първия. The същата кохорта in семестър 2 is a new CourseInstance with new група rows, because a група belongs to exactly one курс; the преподаватели and the зали are shared, which is why the two semesters are solved one at a time and stored apart. Продължаващите дисциплини -- Английски език, Стрелкова подготовка, ЛЗФП -- reuse their Subject row and get a second offering, which is what the catalogue-and-offering split is for. The ladder story above is about семестър 1; семестър 2 replays it with the same three преподаватели. Английският през втория семестър е 28 часа, а не 32: Великденската ваканция затваря петък и събота, а твърдият прозорец на хонорувания преподавател е почти изцяло там -- при равномерно разпределение от точно една сесия на седмица за всяка подгрупа тази седмица няма достатъчно свободни периоди и задачата става INFEASIBLE. По-малкият хорариум сваля пода до нула и оставя седмицата празна, което е и това, което един учебен план прави.",
   "slotConfig": {
     "days": [
       "Mon",
       "Tue",
       "Wed",
       "Thu",
-      "Fri"
+      "Fri",
+      "Sat"
     ],
     "periods": 6,
     "periodTimes": [
@@ -24,18 +25,24 @@
       "id": "professor",
       "name": "проф. — Professor",
       "short": "проф.",
-      "weight": 6
+      "weight": 7
     },
     {
       "id": "associate_professor",
       "name": "доц. — Assoc. Professor",
       "short": "доц.",
-      "weight": 5
+      "weight": 6
     },
     {
       "id": "chief_assistant",
       "name": "гл. ас. — Chief Assistant",
       "short": "гл. ас.",
+      "weight": 5
+    },
+    {
+      "id": "assistant",
+      "name": "ас. — Assistant",
+      "short": "ас.",
       "weight": 4
     },
     {
@@ -51,97 +58,365 @@
       "weight": 2
     },
     {
-      "id": "assistant",
-      "name": "ас. — Assistant",
-      "short": "ас.",
+      "id": "honorary_lecturer",
+      "name": "хон. преп. — Honorary Lecturer",
+      "short": "хон. преп.",
       "weight": 1
+    }
+  ],
+  "faculties": [
+    {
+      "id": "f1",
+      "name": "Факултет \"Полиция\""
+    }
+  ],
+  "katedri": [
+    {
+      "id": "k1",
+      "name": "катедра \"Публичноправни науки\"",
+      "facultyId": "f1"
+    },
+    {
+      "id": "k2",
+      "name": "катедра \"Наказателноправни науки\"",
+      "facultyId": "f1"
+    },
+    {
+      "id": "k3",
+      "name": "катедра \"Оперативно-издирвателна дейност\"",
+      "facultyId": "f1"
+    },
+    {
+      "id": "k4",
+      "name": "катедра \"Специална полицейска тактика\"",
+      "facultyId": "f1"
+    },
+    {
+      "id": "k5",
+      "name": "катедра \"Езиково обучение\"",
+      "facultyId": "f1"
+    }
+  ],
+  "specialties": [
+    {
+      "id": "sp1",
+      "facultyId": "f1",
+      "code": "ППООР",
+      "name": "Противодействие на престъпността и опазване на обществения ред",
+      "degree": "бакалавър",
+      "form": "редовна",
+      "studentKind": "курсант",
+      "durationYears": 4
+    },
+    {
+      "id": "sp2",
+      "facultyId": "f1",
+      "code": "ГП",
+      "name": "Гранична полиция",
+      "degree": "бакалавър",
+      "form": "редовна",
+      "studentKind": "курсант",
+      "durationYears": 4
+    }
+  ],
+  "courseInstances": [
+    {
+      "id": "c1",
+      "specialtyId": "sp1",
+      "year": 1,
+      "academicYear": "2025/2026",
+      "semester": 1,
+      "start": "2025-09-15",
+      "end": "2026-01-31",
+      "nonTeaching": [
+        {
+          "start": "2025-12-22",
+          "end": "2026-01-04",
+          "kind": "ваканция",
+          "label": "Коледна ваканция"
+        },
+        {
+          "start": "2025-12-24",
+          "end": "2025-12-26",
+          "kind": "празник",
+          "label": "Рождество Христово"
+        },
+        {
+          "start": "2026-02-02",
+          "end": "2026-02-20",
+          "kind": "изпитна сесия",
+          "session": "редовна",
+          "label": "Редовна изпитна сесия"
+        },
+        {
+          "start": "2026-02-23",
+          "end": "2026-03-06",
+          "kind": "изпитна сесия",
+          "session": "поправителна",
+          "label": "Поправителна сесия"
+        },
+        {
+          "start": "2026-09-01",
+          "end": "2026-09-11",
+          "kind": "изпитна сесия",
+          "session": "ликвидационна",
+          "label": "Ликвидационна сесия"
+        }
+      ],
+      "regNumber": "рег. № 4823/08.09.2025",
+      "approvedBy": "ДЕКАН на факултет \"Полиция\"\nдоц. д-р Г. Маринов",
+      "approvalDate": "2025-09-08",
+      "administrativenOtgovornik": "гл. ас. д-р Илиев",
+      "maxPeriodsPerDay": 6
+    },
+    {
+      "id": "c2",
+      "specialtyId": "sp2",
+      "year": 1,
+      "academicYear": "2025/2026",
+      "semester": 1,
+      "start": "2025-09-15",
+      "end": "2026-01-31",
+      "nonTeaching": [
+        {
+          "start": "2025-12-22",
+          "end": "2026-01-04",
+          "kind": "ваканция",
+          "label": "Коледна ваканция"
+        },
+        {
+          "start": "2025-12-24",
+          "end": "2025-12-26",
+          "kind": "празник",
+          "label": "Рождество Христово"
+        },
+        {
+          "start": "2026-02-02",
+          "end": "2026-02-20",
+          "kind": "изпитна сесия",
+          "session": "редовна",
+          "label": "Редовна изпитна сесия"
+        },
+        {
+          "start": "2026-02-23",
+          "end": "2026-03-06",
+          "kind": "изпитна сесия",
+          "session": "поправителна",
+          "label": "Поправителна сесия"
+        },
+        {
+          "start": "2026-09-01",
+          "end": "2026-09-11",
+          "kind": "изпитна сесия",
+          "session": "ликвидационна",
+          "label": "Ликвидационна сесия"
+        }
+      ],
+      "regNumber": "рег. № 4824/08.09.2025",
+      "approvedBy": "ДЕКАН на факултет \"Полиция\"\nдоц. д-р Г. Маринов",
+      "approvalDate": "2025-09-08",
+      "administrativenOtgovornik": "ст. преп. Тошева",
+      "maxPeriodsPerDay": 6
+    },
+    {
+      "id": "c3",
+      "specialtyId": "sp1",
+      "year": 1,
+      "academicYear": "2025/2026",
+      "semester": 2,
+      "start": "2026-03-09",
+      "end": "2026-06-27",
+      "nonTeaching": [
+        {
+          "start": "2026-04-10",
+          "end": "2026-04-13",
+          "kind": "ваканция",
+          "label": "Великденска ваканция"
+        },
+        {
+          "start": "2026-05-01",
+          "end": "2026-05-01",
+          "kind": "празник",
+          "label": "Ден на труда"
+        },
+        {
+          "start": "2026-05-06",
+          "end": "2026-05-06",
+          "kind": "празник",
+          "label": "Гергьовден — Ден на храбростта"
+        },
+        {
+          "start": "2026-05-25",
+          "end": "2026-05-25",
+          "kind": "празник",
+          "label": "Ден на светите братя Кирил и Методий"
+        },
+        {
+          "start": "2026-06-29",
+          "end": "2026-07-17",
+          "kind": "изпитна сесия",
+          "session": "редовна",
+          "label": "Редовна изпитна сесия"
+        },
+        {
+          "start": "2026-07-20",
+          "end": "2026-07-31",
+          "kind": "изпитна сесия",
+          "session": "поправителна",
+          "label": "Поправителна сесия"
+        },
+        {
+          "start": "2026-09-01",
+          "end": "2026-09-11",
+          "kind": "изпитна сесия",
+          "session": "ликвидационна",
+          "label": "Ликвидационна сесия"
+        }
+      ],
+      "regNumber": "рег. № 4825/16.02.2026",
+      "approvedBy": "ДЕКАН на факултет \"Полиция\"\nдоц. д-р Г. Маринов",
+      "approvalDate": "2026-02-16",
+      "administrativenOtgovornik": "гл. ас. д-р Илиев",
+      "maxPeriodsPerDay": 6
+    },
+    {
+      "id": "c4",
+      "specialtyId": "sp2",
+      "year": 1,
+      "academicYear": "2025/2026",
+      "semester": 2,
+      "start": "2026-03-09",
+      "end": "2026-06-27",
+      "nonTeaching": [
+        {
+          "start": "2026-04-10",
+          "end": "2026-04-13",
+          "kind": "ваканция",
+          "label": "Великденска ваканция"
+        },
+        {
+          "start": "2026-05-01",
+          "end": "2026-05-01",
+          "kind": "празник",
+          "label": "Ден на труда"
+        },
+        {
+          "start": "2026-05-06",
+          "end": "2026-05-06",
+          "kind": "празник",
+          "label": "Гергьовден — Ден на храбростта"
+        },
+        {
+          "start": "2026-05-25",
+          "end": "2026-05-25",
+          "kind": "празник",
+          "label": "Ден на светите братя Кирил и Методий"
+        },
+        {
+          "start": "2026-06-29",
+          "end": "2026-07-17",
+          "kind": "изпитна сесия",
+          "session": "редовна",
+          "label": "Редовна изпитна сесия"
+        },
+        {
+          "start": "2026-07-20",
+          "end": "2026-07-31",
+          "kind": "изпитна сесия",
+          "session": "поправителна",
+          "label": "Поправителна сесия"
+        },
+        {
+          "start": "2026-09-01",
+          "end": "2026-09-11",
+          "kind": "изпитна сесия",
+          "session": "ликвидационна",
+          "label": "Ликвидационна сесия"
+        }
+      ],
+      "regNumber": "рег. № 4826/16.02.2026",
+      "approvedBy": "ДЕКАН на факултет \"Полиция\"\nдоц. д-р Г. Маринов",
+      "approvalDate": "2026-02-16",
+      "administrativenOtgovornik": "ст. преп. Тошева",
+      "maxPeriodsPerDay": 6
     }
   ],
   "teachers": [
     {
       "id": "t1",
       "name": "проф. д-р Стоянов",
-      "department": "катедра \"Публичноправни науки\"",
+      "katedraId": "k1",
+      "role": "professor",
       "preferredSlots": [
         "mon-1",
-        "mon-2",
-        "tue-1",
-        "tue-2",
-        "wed-1",
-        "wed-2",
-        "thu-1",
-        "thu-2",
-        "fri-1",
-        "fri-2"
+        "wed-1"
       ],
-      "role": "professor",
+      "hardAvailability": [],
       "preferredRooms": [
         "r1",
         "r2",
         "r3"
-      ]
+      ],
+      "maxWeeklyPeriods": null
     },
     {
       "id": "t2",
       "name": "доц. д-р Ковачева",
-      "department": "катедра \"Наказателноправни науки\"",
+      "katedraId": "k2",
+      "role": "associate_professor",
       "preferredSlots": [
         "mon-1",
-        "mon-2",
-        "tue-1",
-        "tue-2",
-        "wed-1",
-        "wed-2",
-        "thu-1",
-        "thu-2",
-        "fri-1",
-        "fri-2"
+        "wed-1"
       ],
-      "role": "associate_professor",
+      "hardAvailability": [],
       "preferredRooms": [
         "r1",
         "r3",
         "r2"
-      ]
+      ],
+      "maxWeeklyPeriods": null
     },
     {
       "id": "t3",
       "name": "гл. ас. д-р Илиев",
-      "department": "катедра \"Наказателноправни науки\"",
-      "preferredSlots": [
-        "mon-6",
-        "tue-6",
-        "wed-6",
-        "thu-6",
-        "fri-6"
-      ],
+      "katedraId": "k2",
       "role": "chief_assistant",
+      "preferredSlots": [
+        "mon-1",
+        "wed-1"
+      ],
+      "hardAvailability": [],
       "preferredRooms": [
         "r2",
         "r1"
-      ]
+      ],
+      "maxWeeklyPeriods": null
     },
     {
       "id": "t4",
       "name": "доц. д-р Николова",
-      "department": "катедра \"Оперативно-издирвателна дейност\"",
+      "katedraId": "k3",
+      "role": "associate_professor",
       "preferredSlots": [
         "mon-6",
         "tue-6",
         "wed-6",
         "thu-6",
-        "fri-6"
+        "fri-6",
+        "sat-6"
       ],
-      "role": "associate_professor",
+      "hardAvailability": [],
       "preferredRooms": [
         "r5",
         "r4"
-      ]
+      ],
+      "maxWeeklyPeriods": null
     },
     {
       "id": "t5",
       "name": "ст. преп. Бонев",
-      "department": "катедра \"Специална полицейска тактика\"",
+      "katedraId": "k4",
+      "role": "senior_lecturer",
       "preferredSlots": [
         "mon-1",
         "mon-2",
@@ -152,18 +427,22 @@
         "thu-1",
         "thu-2",
         "fri-1",
-        "fri-2"
+        "fri-2",
+        "sat-1",
+        "sat-2"
       ],
-      "role": "senior_lecturer",
+      "hardAvailability": [],
       "preferredRooms": [
         "r8",
         "r6"
-      ]
+      ],
+      "maxWeeklyPeriods": null
     },
     {
       "id": "t6",
       "name": "ст. преп. Тошева",
-      "department": "катедра \"Специална полицейска тактика\"",
+      "katedraId": "k4",
+      "role": "senior_lecturer",
       "preferredSlots": [
         "mon-1",
         "mon-2",
@@ -174,71 +453,106 @@
         "thu-1",
         "thu-2",
         "fri-1",
-        "fri-2"
+        "fri-2",
+        "sat-1",
+        "sat-2"
       ],
-      "role": "senior_lecturer",
+      "hardAvailability": [],
       "preferredRooms": [
         "r8",
         "r6"
-      ]
+      ],
+      "maxWeeklyPeriods": null
+    },
+    {
+      "id": "t7",
+      "name": "хон. преп. Радева",
+      "katedraId": "k5",
+      "role": "honorary_lecturer",
+      "preferredSlots": [],
+      "preferredRooms": [],
+      "hardAvailability": [
+        "thu-6",
+        "fri-5",
+        "fri-6",
+        "sat-1",
+        "sat-2"
+      ],
+      "maxWeeklyPeriods": null
     }
   ],
   "rooms": [
     {
       "id": "r1",
       "name": "Аудитория 1",
-      "type": "lecture",
+      "type": "зала",
       "capacity": 150,
-      "building": "Учебен корпус, ет. 1"
+      "building": "Учебен корпус, ет. 1",
+      "maxConcurrentGroups": 1
     },
     {
       "id": "r2",
       "name": "Учебна зала 201",
-      "type": "lecture",
+      "type": "малка зала",
       "capacity": 30,
-      "building": "Учебен корпус, ет. 2"
+      "building": "Учебен корпус, ет. 2",
+      "maxConcurrentGroups": 1
     },
     {
       "id": "r3",
       "name": "Учебна зала 202",
-      "type": "lecture",
+      "type": "малка зала",
       "capacity": 30,
-      "building": "Учебен корпус, ет. 2"
+      "building": "Учебен корпус, ет. 2",
+      "maxConcurrentGroups": 1
     },
     {
       "id": "r4",
       "name": "Компютърна зала 1",
-      "type": "lab",
+      "type": "компютърна зала",
       "capacity": 25,
-      "building": "Учебен корпус, ет. 3"
+      "building": "Учебен корпус, ет. 3",
+      "maxConcurrentGroups": 1
     },
     {
       "id": "r5",
       "name": "Криминалистична лаборатория",
-      "type": "lab",
+      "type": "компютърна зала",
       "capacity": 25,
-      "building": "Учебен корпус, ет. 3"
+      "building": "Учебен корпус, ет. 3",
+      "maxConcurrentGroups": 1
     },
     {
       "id": "r6",
       "name": "Физкултурен салон",
-      "type": "sports",
+      "type": "спортен комплекс",
       "capacity": 60,
-      "building": "Спортен комплекс"
+      "building": "Спортен комплекс",
+      "maxConcurrentGroups": 1
     },
     {
       "id": "r7",
       "name": "Стрелбище",
-      "type": "firing_range",
+      "type": "стрелбище",
       "capacity": 30,
-      "building": "Стрелкови комплекс"
+      "building": "Стрелкови комплекс",
+      "maxConcurrentGroups": 1
     },
     {
       "id": "r8",
       "name": "Полигон за специална тактика",
-      "type": "training_ground",
+      "type": "полигон",
       "capacity": 40,
-      "building": "Учебен полигон"
+      "building": "Учебен полигон",
+      "maxConcurrentGroups": 1
+    },
+    {
+      "id": "r9",
+      "name": "Тренажорна зала",
+      "type": "тренажорна зала",
+      "capacity": 30,
+      "building": "Спортен комплекс",
+      "maxConcurrentGroups": 1
     }
   ],
   "groups": [
@@ -246,496 +560,521 @@
       "id": "g1",
       "name": "1 курс ППООР – гр. 1",
       "size": 25,
-      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс",
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "start": "2025-09-15",
-          "end": "2026-01-30",
-          "breaks": [
-            {
-              "start": "2025-12-22",
-              "end": "2026-01-04",
-              "label": "Коледна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2025/2026",
-          "index": 2,
-          "start": "2026-02-09",
-          "end": "2026-06-12",
-          "breaks": [
-            {
-              "start": "2026-04-10",
-              "end": "2026-04-17",
-              "label": "Пролетна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2026/2027",
-          "index": 1,
-          "start": "2026-09-14",
-          "end": "2027-01-29",
-          "breaks": [
-            {
-              "start": "2026-12-21",
-              "end": "2027-01-03",
-              "label": "Коледна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2026/2027",
-          "index": 2,
-          "start": "2027-02-08",
-          "end": "2027-06-11",
-          "breaks": [
-            {
-              "start": "2027-04-02",
-              "end": "2027-04-09",
-              "label": "Пролетна ваканция"
-            }
-          ]
-        }
-      ]
+      "courseInstanceId": "c1"
     },
     {
       "id": "g2",
       "name": "1 курс ППООР – гр. 2",
       "size": 25,
-      "programme": "Противодействие на престъпността и опазване на обществения ред, 1 курс",
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "start": "2025-09-15",
-          "end": "2026-01-30",
-          "breaks": [
-            {
-              "start": "2025-12-22",
-              "end": "2026-01-04",
-              "label": "Коледна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2025/2026",
-          "index": 2,
-          "start": "2026-02-09",
-          "end": "2026-06-12",
-          "breaks": [
-            {
-              "start": "2026-04-10",
-              "end": "2026-04-17",
-              "label": "Пролетна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2026/2027",
-          "index": 1,
-          "start": "2026-09-14",
-          "end": "2027-01-29",
-          "breaks": [
-            {
-              "start": "2026-12-21",
-              "end": "2027-01-03",
-              "label": "Коледна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2026/2027",
-          "index": 2,
-          "start": "2027-02-08",
-          "end": "2027-06-11",
-          "breaks": [
-            {
-              "start": "2027-04-02",
-              "end": "2027-04-09",
-              "label": "Пролетна ваканция"
-            }
-          ]
-        }
-      ]
+      "courseInstanceId": "c1"
     },
     {
       "id": "g3",
       "name": "1 курс ГП – гр. 1",
       "size": 25,
-      "programme": "Гранична полиция, 1 курс",
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "start": "2025-09-15",
-          "end": "2026-01-30",
-          "breaks": [
-            {
-              "start": "2025-12-22",
-              "end": "2026-01-04",
-              "label": "Коледна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2025/2026",
-          "index": 2,
-          "start": "2026-02-09",
-          "end": "2026-06-12",
-          "breaks": [
-            {
-              "start": "2026-04-10",
-              "end": "2026-04-17",
-              "label": "Пролетна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2026/2027",
-          "index": 1,
-          "start": "2026-09-14",
-          "end": "2027-01-29",
-          "breaks": [
-            {
-              "start": "2026-12-21",
-              "end": "2027-01-03",
-              "label": "Коледна ваканция"
-            }
-          ]
-        },
-        {
-          "academicYear": "2026/2027",
-          "index": 2,
-          "start": "2027-02-08",
-          "end": "2027-06-11",
-          "breaks": [
-            {
-              "start": "2027-04-02",
-              "end": "2027-04-09",
-              "label": "Пролетна ваканция"
-            }
-          ]
-        }
-      ]
+      "courseInstanceId": "c2"
+    },
+    {
+      "id": "g4",
+      "name": "1 курс ППООР – гр. 1",
+      "size": 25,
+      "courseInstanceId": "c3"
+    },
+    {
+      "id": "g5",
+      "name": "1 курс ППООР – гр. 2",
+      "size": 25,
+      "courseInstanceId": "c3"
+    },
+    {
+      "id": "g6",
+      "name": "1 курс ГП – гр. 1",
+      "size": 25,
+      "courseInstanceId": "c4"
+    }
+  ],
+  "subgroups": [
+    {
+      "id": "sg1a",
+      "groupId": "g1",
+      "name": "1 гр. – подгрупа А",
+      "size": 13
+    },
+    {
+      "id": "sg1b",
+      "groupId": "g1",
+      "name": "1 гр. – подгрупа Б",
+      "size": 12
+    },
+    {
+      "id": "sg3a",
+      "groupId": "g3",
+      "name": "ГП – английски B1",
+      "size": 15
+    },
+    {
+      "id": "sg3b",
+      "groupId": "g3",
+      "name": "ГП – английски A2",
+      "size": 10
+    },
+    {
+      "id": "sg4a",
+      "groupId": "g4",
+      "name": "1 гр. – подгрупа А",
+      "size": 13
+    },
+    {
+      "id": "sg4b",
+      "groupId": "g4",
+      "name": "1 гр. – подгрупа Б",
+      "size": 12
+    },
+    {
+      "id": "sg6a",
+      "groupId": "g6",
+      "name": "ГП – английски B1",
+      "size": 15
+    },
+    {
+      "id": "sg6b",
+      "groupId": "g6",
+      "name": "ГП – английски A2",
+      "size": 10
     }
   ],
   "subjects": [
     {
       "id": "s1",
-      "name": "Наказателно право – лекции",
-      "allowedRoomTypes": [
-        "lecture"
-      ],
-      "teacherIds": [
-        "t2",
-        "t3"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 36,
-          "spread": "whole",
-          "groupIds": [
-            "g1",
-            "g2",
-            "g3"
-          ]
-        }
-      ]
+      "code": "НП",
+      "name": "Наказателно право",
+      "katedraId": "k2"
     },
     {
       "id": "s2",
-      "name": "Наказателно право – упр. (гр. 1)",
-      "allowedRoomTypes": [
-        "lecture"
-      ],
-      "teacherIds": [
-        "t3"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 18,
-          "spread": "whole",
-          "groupIds": [
-            "g1"
-          ]
-        }
-      ]
+      "code": "КП",
+      "name": "Конституционно право",
+      "katedraId": "k1"
     },
     {
       "id": "s3",
-      "name": "Наказателно право – упр. (гр. 2)",
-      "allowedRoomTypes": [
-        "lecture"
-      ],
-      "teacherIds": [
-        "t3"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 18,
-          "spread": "whole",
-          "groupIds": [
-            "g2"
-          ]
-        }
-      ]
+      "code": "КРИМ",
+      "name": "Криминалистика",
+      "katedraId": "k3"
     },
     {
       "id": "s4",
-      "name": "Конституционно право – лекции",
-      "allowedRoomTypes": [
-        "lecture"
-      ],
-      "teacherIds": [
-        "t1"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 36,
-          "spread": "whole",
-          "groupIds": [
-            "g1",
-            "g2",
-            "g3"
-          ]
-        }
-      ]
+      "code": "ЛЗФП",
+      "name": "Лична защита и физическа подготовка",
+      "katedraId": "k4"
     },
     {
       "id": "s5",
-      "name": "Криминалистика – упр. (гр. 1)",
-      "allowedRoomTypes": [
-        "lab"
-      ],
-      "teacherIds": [
-        "t2",
-        "t4"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 18,
-          "spread": "whole",
-          "groupIds": [
-            "g1"
-          ]
-        }
-      ]
+      "code": "СП",
+      "name": "Стрелкова подготовка",
+      "katedraId": "k4"
     },
     {
       "id": "s6",
-      "name": "Криминалистика – упр. (гр. 2)",
-      "allowedRoomTypes": [
-        "lab"
-      ],
-      "teacherIds": [
-        "t4"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 18,
-          "spread": "whole",
-          "groupIds": [
-            "g2"
-          ]
-        }
-      ]
+      "code": "СПТ",
+      "name": "Специална полицейска тактика",
+      "katedraId": "k4"
     },
     {
       "id": "s7",
-      "name": "Информационни технологии – упр. (ГП)",
-      "allowedRoomTypes": [
-        "lab"
-      ],
-      "teacherIds": [
-        "t4"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 18,
-          "spread": "whole",
-          "groupIds": [
-            "g3"
-          ]
-        }
-      ]
+      "code": "АЕ",
+      "name": "Английски език",
+      "katedraId": "k5"
     },
     {
       "id": "s8",
-      "name": "Физическа подготовка (гр. 1)",
-      "allowedRoomTypes": [
-        "sports",
-        "training_ground"
-      ],
-      "teacherIds": [
-        "t5",
-        "t6"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 36,
-          "spread": "whole",
-          "groupIds": [
-            "g1"
-          ]
-        }
-      ]
+      "code": "ОГП",
+      "name": "Основи на гражданското право",
+      "katedraId": "k1"
     },
     {
       "id": "s9",
-      "name": "Физическа подготовка (гр. 2)",
-      "allowedRoomTypes": [
-        "sports",
-        "training_ground"
-      ],
-      "teacherIds": [
-        "t5",
-        "t6"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 36,
-          "spread": "whole",
-          "groupIds": [
-            "g2"
-          ]
-        }
-      ]
-    },
+      "code": "НПОсЧ",
+      "name": "Наказателно право (особена част)",
+      "katedraId": "k2"
+    }
+  ],
+  "offerings": [
     {
-      "id": "s10",
-      "name": "Физическа подготовка (ГП)",
-      "allowedRoomTypes": [
-        "sports",
-        "training_ground"
+      "id": "o1",
+      "subjectId": "s1",
+      "courseInstanceId": "c1",
+      "lectureHours": 36,
+      "exerciseHours": 36,
+      "hoursPerSession": 2,
+      "controlForm": "изпит",
+      "lectureRoomTypes": [
+        "зала"
       ],
-      "teacherIds": [
-        "t5",
-        "t6"
+      "exerciseRoomTypes": [
+        "малка зала"
       ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 36,
-          "spread": "whole",
-          "groupIds": [
-            "g3"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "s11",
-      "name": "Огнева подготовка",
-      "allowedRoomTypes": [
-        "firing_range"
+      "streamGroupIds": [
+        "g1",
+        "g2",
+        "g3"
       ],
-      "teacherIds": [
-        "t5",
-        "t6"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 24,
-          "spread": "range",
-          "window": {
-            "start": "2025-11-10",
-            "end": "2026-01-30",
-            "label": "втора половина"
-          },
-          "groupIds": [
-            "g1"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "s12",
-      "name": "Специална полицейска тактика",
-      "allowedRoomTypes": [
-        "training_ground"
-      ],
-      "teacherIds": [
-        "t5",
-        "t6"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 54,
-          "spread": "whole",
-          "groupIds": [
-            "g2"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "s13",
-      "name": "Криминалистика – упр. (ГП)",
-      "allowedRoomTypes": [
-        "lab"
-      ],
-      "teacherIds": [
-        "t4"
-      ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 18,
-          "spread": "whole",
-          "groupIds": [
-            "g3"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "s14",
-      "name": "Наказателно право – упр. (ГП)",
-      "allowedRoomTypes": [
-        "lecture"
-      ],
-      "teacherIds": [
+      "leadTeacherId": "t2",
+      "exerciseTeacherIds": [
         "t3"
       ],
-      "semesters": [
-        {
-          "academicYear": "2025/2026",
-          "index": 1,
-          "totalSessions": 18,
-          "spread": "whole",
-          "groupIds": [
-            "g3"
-          ]
-        }
-      ]
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [
+        "g1",
+        "g2",
+        "g3"
+      ],
+      "spread": "whole",
+      "examDate": "2026-02-05"
+    },
+    {
+      "id": "o2",
+      "subjectId": "s2",
+      "courseInstanceId": "c1",
+      "lectureHours": 36,
+      "exerciseHours": 0,
+      "hoursPerSession": 2,
+      "controlForm": "изпит",
+      "lectureRoomTypes": [
+        "зала"
+      ],
+      "exerciseRoomTypes": [],
+      "streamGroupIds": [
+        "g1",
+        "g2",
+        "g3"
+      ],
+      "leadTeacherId": "t1",
+      "exerciseTeacherIds": [],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [],
+      "spread": "whole",
+      "examDate": "2026-02-11"
+    },
+    {
+      "id": "o3",
+      "subjectId": "s3",
+      "courseInstanceId": "c1",
+      "lectureHours": 0,
+      "exerciseHours": 36,
+      "hoursPerSession": 2,
+      "controlForm": "КТО",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "компютърна зала"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t4"
+      ],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [
+        "g1",
+        "g2",
+        "g3"
+      ],
+      "spread": "whole",
+      "examDate": "2026-02-17"
+    },
+    {
+      "id": "o4",
+      "subjectId": "s4",
+      "courseInstanceId": "c1",
+      "lectureHours": 0,
+      "exerciseHours": 36,
+      "hoursPerSession": 2,
+      "controlForm": "зачет",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "спортен комплекс",
+        "тренажорна зала"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t5",
+        "t6"
+      ],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [
+        "g1",
+        "g2",
+        "g3"
+      ],
+      "spread": "whole"
+    },
+    {
+      "id": "o5",
+      "subjectId": "s5",
+      "courseInstanceId": "c1",
+      "lectureHours": 0,
+      "exerciseHours": 20,
+      "hoursPerSession": 2,
+      "controlForm": "зачет",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "стрелбище"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t5",
+        "t6"
+      ],
+      "exerciseAudience": "subgroup",
+      "exerciseUnitIds": [
+        "sg1a",
+        "sg1b"
+      ],
+      "spread": "range",
+      "window": {
+        "start": "2025-11-10",
+        "end": "2026-01-31",
+        "label": "втора половина на семестъра"
+      }
+    },
+    {
+      "id": "o6",
+      "subjectId": "s6",
+      "courseInstanceId": "c1",
+      "lectureHours": 0,
+      "exerciseHours": 36,
+      "hoursPerSession": 2,
+      "controlForm": "зачет",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "полигон"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t5",
+        "t6"
+      ],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [
+        "g2"
+      ],
+      "spread": "whole"
+    },
+    {
+      "id": "o7",
+      "subjectId": "s7",
+      "courseInstanceId": "c2",
+      "lectureHours": 0,
+      "exerciseHours": 32,
+      "hoursPerSession": 2,
+      "controlForm": "зачет",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "малка зала"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t7"
+      ],
+      "exerciseAudience": "subgroup",
+      "exerciseUnitIds": [
+        "sg3a",
+        "sg3b"
+      ],
+      "spread": "whole",
+      "examDate": "2026-02-13"
+    },
+    {
+      "id": "o8",
+      "subjectId": "s8",
+      "courseInstanceId": "c3",
+      "lectureHours": 32,
+      "exerciseHours": 0,
+      "hoursPerSession": 2,
+      "controlForm": "изпит",
+      "lectureRoomTypes": [
+        "зала"
+      ],
+      "exerciseRoomTypes": [],
+      "streamGroupIds": [
+        "g4",
+        "g5",
+        "g6"
+      ],
+      "leadTeacherId": "t1",
+      "exerciseTeacherIds": [],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [],
+      "spread": "whole",
+      "examDate": "2026-07-02"
+    },
+    {
+      "id": "o9",
+      "subjectId": "s9",
+      "courseInstanceId": "c3",
+      "lectureHours": 32,
+      "exerciseHours": 32,
+      "hoursPerSession": 2,
+      "controlForm": "изпит",
+      "lectureRoomTypes": [
+        "зала"
+      ],
+      "exerciseRoomTypes": [
+        "малка зала"
+      ],
+      "streamGroupIds": [
+        "g4",
+        "g5",
+        "g6"
+      ],
+      "leadTeacherId": "t2",
+      "exerciseTeacherIds": [
+        "t3"
+      ],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [
+        "g4",
+        "g5",
+        "g6"
+      ],
+      "spread": "whole",
+      "examDate": "2026-06-30"
+    },
+    {
+      "id": "o10",
+      "subjectId": "s3",
+      "courseInstanceId": "c3",
+      "lectureHours": 0,
+      "exerciseHours": 32,
+      "hoursPerSession": 2,
+      "controlForm": "КТО",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "компютърна зала"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t4"
+      ],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [
+        "g4",
+        "g5",
+        "g6"
+      ],
+      "spread": "whole",
+      "examDate": "2026-07-06"
+    },
+    {
+      "id": "o11",
+      "subjectId": "s5",
+      "courseInstanceId": "c3",
+      "lectureHours": 0,
+      "exerciseHours": 20,
+      "hoursPerSession": 2,
+      "controlForm": "зачет",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "стрелбище"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t5",
+        "t6"
+      ],
+      "exerciseAudience": "subgroup",
+      "exerciseUnitIds": [
+        "sg4a",
+        "sg4b"
+      ],
+      "spread": "range",
+      "window": {
+        "start": "2026-05-11",
+        "end": "2026-06-27",
+        "label": "втора половина на семестъра"
+      }
+    },
+    {
+      "id": "o12",
+      "subjectId": "s6",
+      "courseInstanceId": "c3",
+      "lectureHours": 0,
+      "exerciseHours": 32,
+      "hoursPerSession": 2,
+      "controlForm": "зачет",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "полигон"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t5",
+        "t6"
+      ],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [
+        "g5"
+      ],
+      "spread": "whole"
+    },
+    {
+      "id": "o13",
+      "subjectId": "s4",
+      "courseInstanceId": "c3",
+      "lectureHours": 0,
+      "exerciseHours": 32,
+      "hoursPerSession": 2,
+      "controlForm": "зачет",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "спортен комплекс",
+        "тренажорна зала"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t5",
+        "t6"
+      ],
+      "exerciseAudience": "group",
+      "exerciseUnitIds": [
+        "g4",
+        "g5",
+        "g6"
+      ],
+      "spread": "whole"
+    },
+    {
+      "id": "o14",
+      "subjectId": "s7",
+      "courseInstanceId": "c4",
+      "lectureHours": 0,
+      "exerciseHours": 28,
+      "hoursPerSession": 2,
+      "controlForm": "зачет",
+      "lectureRoomTypes": [],
+      "exerciseRoomTypes": [
+        "малка зала"
+      ],
+      "streamGroupIds": [],
+      "leadTeacherId": null,
+      "exerciseTeacherIds": [
+        "t7"
+      ],
+      "exerciseAudience": "subgroup",
+      "exerciseUnitIds": [
+        "sg6a",
+        "sg6b"
+      ],
+      "spread": "whole",
+      "examDate": "2026-07-08"
     }
   ]
 }

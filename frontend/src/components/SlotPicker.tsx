@@ -1,4 +1,4 @@
-import { allSlots } from '../slots';
+import { allSlots, periodTime } from '../slots';
 import type { SlotConfig } from '../types';
 
 interface Props {
@@ -6,35 +6,44 @@ interface Props {
   selected: string[];
   onToggle: (slotId: string) => void;
   size?: 'sm' | 'lg';
+  /** 'pref' is the soft preference grid; 'hard' is availability, which the
+   *  solver may never trade away. The two are drawn apart on purpose. */
+  intent?: 'pref' | 'hard';
 }
 
-/** The 5x5 preference grid: days across, periods down. Used inline in the
- *  teachers table and full-size in the teacher form. */
-export function SlotPicker({ config, selected, onToggle, size = 'sm' }: Props) {
+/** The weekly grid: days across, periods down. Used inline in the teachers table
+ *  and full-size in the teacher form. */
+export function SlotPicker({ config, selected, onToggle, size = 'sm', intent = 'pref' }: Props) {
   const chosen = new Set(selected);
   const slots = allSlots(config);
-  const byPeriod: string[][] = [];
+  const byPeriod: typeof slots[] = [];
   for (let p = 1; p <= config.periods; p++) {
-    byPeriod.push(slots.filter((s) => s.period === p).map((s) => s.id));
+    byPeriod.push(slots.filter((s) => s.period === p));
   }
 
   return (
     <div
-      className={`prefgrid${size === 'lg' ? ' prefgrid--lg' : ''}`}
-      style={{ gridTemplateColumns: `repeat(${config.days.length}, ${size === 'lg' ? '1fr' : '13px'})` }}
+      className={`prefgrid${size === 'lg' ? ' prefgrid--lg' : ''}${
+        intent === 'hard' ? ' prefgrid--hard' : ''
+      }`}
+      style={{
+        gridTemplateColumns: `repeat(${config.days.length}, ${size === 'lg' ? '1fr' : '13px'})`,
+      }}
     >
       {byPeriod.flatMap((row, pi) =>
-        row.map((id, di) => {
-          const on = chosen.has(id);
+        row.map((cell) => {
+          const on = chosen.has(cell.id);
+          const when = periodTime(config, pi + 1);
+          const label = `${cell.day} period ${pi + 1}${when ? ` (${when})` : ''}`;
           return (
             <button
-              key={id}
+              key={cell.id}
               type="button"
-              title={`${config.days[di]} Period ${pi + 1}${on ? ' — preferred' : ''}`}
-              aria-label={`${config.days[di]} period ${pi + 1}`}
+              title={`${label}${on ? (intent === 'hard' ? ' — available' : ' — preferred') : ''}`}
+              aria-label={label}
               aria-pressed={on}
               className={`prefgrid__cell${on ? ' prefgrid__cell--on' : ''}`}
-              onClick={() => onToggle(id)}
+              onClick={() => onToggle(cell.id)}
             />
           );
         }),

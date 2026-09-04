@@ -4,7 +4,7 @@ import { Accordion } from './ds/Accordion';
 import { Button } from './ds/Button';
 import { HelpTip } from './ds/HelpTip';
 import { useBodyScrollLock } from './ds/useBodyScrollLock';
-import { DEFAULT_SOLVE_SECONDS, defaultSettings, formatLimit } from '../settings';
+import { DEFAULT_SOLVE_SECONDS, DEMO_SOLVE_SECONDS, defaultSettings, formatLimit } from '../settings';
 import type { SearchParams, SolverSettings } from '../types';
 
 interface Props {
@@ -120,15 +120,15 @@ export function SettingsDialog({ settings, onChange, onClose }: Props) {
       >
         <Setting
           label="Time limit"
-          help="How long the scheduler is allowed to think. It stops at this point and hands back the best timetable it has found so far. A full faculty timetable will use every second you give it, so more time buys a better schedule rather than a faster answer."
+          help="How long the scheduler is allowed to think. Given a limit it stops there and hands back the best timetable it has found so far; with no limit it runs until it proves it can do no better. A full faculty timetable will use every second you give it, so more time buys a better schedule rather than a faster answer."
           meta={`Default ${formatLimit(
             DEFAULT_SOLVE_SECONDS,
-          )}. Unlimited runs until the scheduler proves it can do no better — on a faculty-sized problem that can take hours, and the run cannot be stopped from here.`}
+          )} — a faculty-sized semester needs about ninety seconds just to find its first legal timetable, so a short budget comes back with nothing placed. Unlimited can take hours on a hard problem, and the run cannot be stopped from here.`}
         >
           <Choice
             options={[
               ['10 s', 10],
-              ['30 s', DEFAULT_SOLVE_SECONDS],
+              ['30 s', DEMO_SOLVE_SECONDS],
               ['2 min', 120],
               ['20 min', 20 * 60],
               ['Unlimited', null],

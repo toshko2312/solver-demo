@@ -66,7 +66,7 @@ export function RunDetails({ run, result, error, used, onGoResult, onGoData }: P
               <div className="statgrid__value">
                 {stats.numPlaced} / {stats.numSessions}
               </div>
-              <div className="statgrid__note">across {stats.numSlots} open slots</div>
+              <div className="statgrid__note">across {stats.numSlots} open periods</div>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ export function RunDetails({ run, result, error, used, onGoResult, onGoData }: P
               {result.assignments
                 .filter((a) => a.softViolated)
                 .map((a) => (
-                  <div key={`${a.subjectId}-${a.slot}`} style={{ marginBottom: 4 }}>
+                  <div key={`${a.offeringId}-${a.slot}`} style={{ marginBottom: 4 }}>
                     <strong>{a.teacherName}</strong> — {a.softReason}
                   </div>
                 ))}

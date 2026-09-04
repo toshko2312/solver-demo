@@ -1,6 +1,33 @@
-/** Domain model. Mirrors solver/app/models.py -- this is the whole wire format. */
+/** Domain model. Mirrors solver/app/models.py -- this is the whole wire format.
+ *
+ *  The hierarchy is the academy's: Faculty -> Specialty -> CourseInstance ->
+ *  Group -> Subgroup. A разписание is issued per CourseInstance, and teaching is
+ *  placed in periods of two academic hours. */
 
-export type RoomType = 'lecture' | 'lab' | 'sports' | 'firing_range' | 'training_ground';
+export type RoomType =
+  | 'зала'
+  | 'малка зала'
+  | 'компютърна зала'
+  | 'стрелбище'
+  | 'полигон'
+  | 'спортен комплекс'
+  | 'тренажорна зала';
+
+/** ОКС. */
+export type Degree = 'бакалавър' | 'магистър' | 'доктор';
+export type StudyForm = 'редовна' | 'задочна';
+export type StudentKind = 'курсант' | 'студент';
+
+/** Why a stretch of the term carries no teaching. All four are equally unusable;
+ *  they stay distinct because the разписание prints them apart. */
+export type NonTeachingKind = 'ваканция' | 'стаж' | 'изпитна сесия' | 'празник';
+export type ExamSessionKind = 'редовна' | 'поправителна' | 'ликвидационна';
+
+/** What a session is. The разписание grid marks cells with the first letter. */
+export type ActivityKind = 'лекция' | 'упражнение' | 'практика';
+export type ControlForm = 'изпит' | 'КТО' | 'зачет';
+/** Who attends an offering's упражнения. */
+export type Audience = 'group' | 'subgroup';
 
 /** An academic rank. Mirrors Role in solver/app/models.py.
  *  Ranks are problem data, edited on the Data setup screen like everything else. */
@@ -15,15 +42,85 @@ export interface Role {
   weight: number;
 }
 
+export interface Faculty {
+  id: string;
+  name: string;
+}
+
+/** A катедра. Owns subjects and teachers. */
+export interface Katedra {
+  id: string;
+  name: string;
+  facultyId?: string | null;
+}
+
+export interface Specialty {
+  id: string;
+  facultyId: string;
+  /** 'ППООР', 'ГП'. */
+  code: string;
+  name: string;
+  degree: Degree;
+  form: StudyForm;
+  studentKind: StudentKind;
+  durationYears: number;
+}
+
+/** A closed interval of dates: an offering's spread window. */
+export interface DateRange {
+  start: string;
+  end: string;
+  label?: string;
+}
+
+/** A stretch of the term with no teaching in it, and why. Replaces the old
+ *  untyped `breaks`. `session` is set only when kind is 'изпитна сесия'. */
+export interface NonTeachingPeriod {
+  start: string;
+  end: string;
+  kind: NonTeachingKind;
+  session?: ExamSessionKind | null;
+  label?: string | null;
+}
+
+/** One курс of one специалност in one semester: the scheduling unit, and the
+ *  unit a printed разписание is emitted for. Term dates live here rather than on
+ *  the group, because year 1 routinely runs a different calendar from years 2-4
+ *  of the same специалност. */
+export interface CourseInstance {
+  id: string;
+  specialtyId: string;
+  year: number;
+  academicYear: string;
+  semester: 1 | 2;
+  start: string;
+  end: string;
+  nonTeaching: NonTeachingPeriod[];
+  /** Hard cap on periods taught to one of its groups in a day. */
+  maxPeriodsPerDay: number;
+  /** Разписание header. Descriptive only -- the solver never reads these. */
+  regNumber?: string | null;
+  approvedBy?: string | null;
+  approvalDate?: string | null;
+  administrativenOtgovornik?: string | null;
+}
+
 export interface Teacher {
   id: string;
   name: string;
-  department?: string;
-  /** Soft preference: slot ids the solver should aim for, but may trade away. */
+  katedraId?: string | null;
+  /** Soft preference: weekday keys ('mon-1') the solver aims for but may trade
+   *  away. */
   preferredSlots: string[];
+  /** HARD availability, same key shape. Empty means always available. A literal
+   *  is never created outside this list, so it cannot be bought at any price --
+   *  unlike a preference, an impossible availability is INFEASIBLE. */
+  hardAvailability: string[];
+  /** Hard cap on periods taught in one ISO week. null means uncapped. */
+  maxWeeklyPeriods?: number | null;
   /** Soft preference, and ORDERED: [0] is the room this teacher most wants.
-   *  Ranking is scoped per room type -- ranking labs says nothing about which
-   *  sports hall you get. */
+   *  Ranking is scoped per room type -- ranking полигони says nothing about
+   *  which стрелбище you get. */
   preferredRooms: string[];
   /** Id of a Role. Absent, or naming a role that is gone, means unranked --
    *  which shares the bottom priority tier. */
@@ -39,39 +136,88 @@ export interface Room {
   capacity: number;
   type: RoomType;
   building?: string;
+  /** How many sessions may share this room in one period. 1 for everything by
+   *  default, and emphatically 1 for стрелбище and малка зала. */
+  maxConcurrentGroups: number;
 }
 
+/** Учебна група. Belongs to exactly one CourseInstance, which owns its dates. */
 export interface Group {
   id: string;
   name: string;
   size: number;
-  programme?: string;
-  /** At most two per academic year. A group with no entry for the semester being
-   *  generated is not in term and takes no part in that solve. */
-  semesters: GroupSemester[];
+  courseInstanceId: string;
 }
 
+/** Подгрупа: a group split for стрелкова подготовка, ЛЗФП or чуждоезиково
+ *  обучение -- language подгрупи split by level, so sizes are uneven on purpose.
+ *  Two subgroups of one group may be taught at the same time; a group-level
+ *  session excludes every one of them. */
+export interface Subgroup {
+  id: string;
+  groupId: string;
+  name: string;
+  size: number;
+}
+
+/** A catalogue entry. What is *taught* is a SubjectOffering. */
 export interface Subject {
   id: string;
+  /** 'ОИД', 'УППС', 'ЛЗФП', 'СП', 'АЕ'. */
+  code: string;
   name: string;
-  /** Any room of one of these types will do; the solver picks. */
-  allowedRoomTypes: RoomType[];
-  /** One entry per semester this subject runs in. */
-  semesters: SubjectSemester[];
-  /** Candidate teachers. The solver assigns exactly one per session. */
-  teacherIds: string[];
+  katedraId?: string | null;
+}
+
+export type SpreadMode = 'whole' | 'range' | 'block';
+
+/** One subject as taught to one курс: the хорариум and everything around it.
+ *  Hours, not session counts -- '30/15' is 30 лекционни and 15 упражнителни
+ *  часа, and the solver divides by hoursPerSession. */
+export interface SubjectOffering {
+  id: string;
+  subjectId: string;
+  courseInstanceId: string;
+  lectureHours: number;
+  exerciseHours: number;
+  /** Academic hours in one session. One period, so 2. */
+  hoursPerSession: number;
+  controlForm: ControlForm;
+  /** Allowed room types per activity kind. */
+  lectureRoomTypes: RoomType[];
+  exerciseRoomTypes: RoomType[];
+  /** The ПОТОК: groups merged for this offering's lectures. A join, not an
+   *  attribute of the course -- общообразователните merge across специалности
+   *  and специалните do not. Exercises ignore it entirely. */
+  streamGroupIds: string[];
+  /** Водещ преподавател. A лекция has one named lecturer, not a pool. */
+  leadTeacherId?: string | null;
+  /** Упражнения keep the pool: exactly one takes each session, per session. */
+  exerciseTeacherIds: string[];
+  exerciseAudience: Audience;
+  /** Group ids when audience is 'group', subgroup ids when 'subgroup'. Each unit
+   *  gets its own full exerciseHours -- the хорариум is per student. */
+  exerciseUnitIds: string[];
+  spread: SpreadMode;
+  /** Required when spread is 'range' or 'block'. */
+  window?: DateRange;
+  examDate?: string | null;
 }
 
 export interface SlotConfig {
   days: string[];
   periods: number;
+  /** 'HH:MM-HH:MM' per period. The обедна почивка is the gap these leave between
+   *  two of them -- it needs no field of its own, and no rule. */
   periodTimes: string[];
-  /** Slot ids the user has switched off; these are never sent to the solver. */
+  /** Weekday-keyed slot ids the user has switched off; these are never sent to
+   *  the solver. */
   blockedSlots: string[];
 }
 
-/** A cell of the weekly template: what the preference grid and the blocking UI
- *  work in. Undated on purpose -- 'mon-1' means that period every week. */
+/** A cell of the weekly template: what the preference grid, the availability
+ *  grid and the blocking UI all work in. Undated on purpose -- 'mon-1' means
+ *  that period every week. */
 export interface WeekdaySlot {
   id: string;
   day: string;
@@ -81,14 +227,14 @@ export interface WeekdaySlot {
 export interface Slot {
   /** '<ISO date>-<period>', e.g. '2025-09-15-1'. */
   id: string;
-  /** ISO date. The weekday is kept alongside it because columns and
-   *  `blockedSlots` are both weekday-keyed. */
+  /** ISO date. The weekday is kept alongside it because columns and the
+   *  blocking keys are both weekday-keyed. */
   date: string;
   day: string;
   period: number;
 }
 
-/** Identity of a semester. The *dates* live per group. */
+/** Identity of a semester. The *dates* live on the CourseInstance. */
 export interface SemesterRef {
   academicYear: string; // '2025/2026'
   index: 1 | 2;
@@ -98,57 +244,43 @@ export function semesterKey(ref: SemesterRef): string {
   return `${ref.academicYear}-${ref.index}`;
 }
 
-/** A closed interval of dates: a break, or a subject's spread window. */
-export interface DateRange {
-  start: string;
-  end: string;
-  label?: string;
-}
-
-/** One group's dates for one semester. Breaks are excluded from teaching
- *  entirely and do not count towards the weeks an even spread is measured on. */
-export interface GroupSemester extends SemesterRef {
-  start: string;
-  end: string;
-  breaks: DateRange[];
-}
-
-export type SpreadMode = 'whole' | 'range';
-
-/** How much of a subject runs in one semester. A total, not a weekly rate:
- *  sessions land on real dates, so nothing has to divide evenly. */
-export interface SubjectSemester extends SemesterRef {
-  totalSessions: number;
-  spread: SpreadMode;
-  /** Required when spread is 'range'. */
-  window?: DateRange;
-  /** Who attends this subject in this semester. Every listed group is busy for
-   *  the whole session. Groups live here rather than on the subject because a
-   *  subject can run for different cohorts in each semester. */
-  groupIds: string[];
-}
-
 export interface Problem {
   slotConfig: SlotConfig;
   roles: Role[];
+  faculties: Faculty[];
+  katedri: Katedra[];
+  specialties: Specialty[];
+  courseInstances: CourseInstance[];
   teachers: Teacher[];
   rooms: Room[];
   groups: Group[];
+  subgroups: Subgroup[];
   subjects: Subject[];
+  offerings: SubjectOffering[];
 }
 
 export interface Assignment {
+  offeringId: string;
   subjectId: string;
+  subjectCode: string;
   subjectName: string;
+  activity: ActivityKind;
+  /** The dated period this session occupies, and its number on the day. */
   slot: string;
+  period: number;
   /** The real date this session lands on. */
   date: string;
+  day: string;
   roomId: string;
   roomName: string;
   teacherId: string;
   teacherName: string;
+  /** Every group busy for this session: the whole поток for a лекция, the
+   *  subgroup's parent group for a подгрупа упражнение. */
   groupIds: string[];
   groupNames: string[];
+  subgroupId: string | null;
+  subgroupName: string | null;
   softViolated: boolean;
   softReason: string | null;
   /** Position of the assigned room among the rooms this teacher ranked *of that
@@ -176,6 +308,7 @@ export interface Stats {
   bestObjectiveBound: number | null;
   numSessions: number;
   numPlaced: number;
+  /** Dated periods on offer -- what the solver places into. */
   numSlots: number;
   numBooleanVariables: number;
   preferenceViolations: number;
@@ -220,6 +353,87 @@ export interface SolveResponse {
   hints: Hint[];
   /** What the run was actually solved with -- not necessarily what is on screen now. */
   settingsUsed: SolverSettings | null;
+}
+
+// ---------------------------------------------------------------------------
+// The разписание document. Built server-side by solver/app/razpisanie.py; the
+// JSON above stays the machine-readable form and this is a renderer on top.
+// ---------------------------------------------------------------------------
+
+export interface RazpisanieHeader {
+  facultyName: string;
+  regNumber: string | null;
+  approvedBy: string | null;
+  approvalDate: string | null;
+  specialtyCode: string;
+  specialtyName: string;
+  degree: Degree;
+  form: StudyForm;
+  studentKind: StudentKind;
+  year: number;
+  semester: number;
+  start: string;
+  end: string;
+  administrativenOtgovornik: string | null;
+}
+
+/** One numbered line of section I. `number` is what the grid cells print. */
+export interface RazpisanieSubject {
+  number: number;
+  code: string;
+  name: string;
+  lectureHours: number;
+  exerciseHours: number;
+  katedra: string | null;
+  leadTeacher: string | null;
+  exerciseTeachers: string[];
+  rooms: string[];
+  controlForm: ControlForm;
+}
+
+/** One line of section II -- разпределение на учебното време. */
+export interface RazpisanieTimeBlock {
+  label: string;
+  start: string;
+  end: string;
+  weeks: number;
+}
+
+/** One line of section III. */
+export interface RazpisanieExam {
+  number: number;
+  code: string;
+  name: string;
+  controlForm: ControlForm;
+  examDate: string | null;
+}
+
+/** One (day, period) cell of the month grid. Empty cells are simply absent. */
+export interface RazpisanieCell {
+  date: string;
+  period: number;
+  /** Usually one entry; more than one when подгрупи run in parallel. */
+  entries: string[];
+}
+
+export interface RazpisanieMonth {
+  label: string;
+  year: number;
+  month: number;
+  dates: string[];
+  cells: RazpisanieCell[];
+}
+
+export interface Razpisanie {
+  courseInstanceId: string;
+  header: RazpisanieHeader;
+  subjects: RazpisanieSubject[];
+  timeBlocks: RazpisanieTimeBlock[];
+  exams: RazpisanieExam[];
+  /** The grid's columns: 1..periods, with their clock times. */
+  periods: number[];
+  periodTimes: Record<number, string>;
+  months: RazpisanieMonth[];
 }
 
 /** Live progress of a solve in flight, assembled from the solver's own events.

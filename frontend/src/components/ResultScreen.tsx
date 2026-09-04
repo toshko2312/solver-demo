@@ -6,9 +6,18 @@ import { useBodyScrollLock } from './ds/useBodyScrollLock';
 import { MoveSessionDialog } from './MoveSessionDialog';
 import { StaleBanner } from './StaleBanner';
 import { findConflicts, spreadNotices } from '../conflicts';
-import { ROOM_TYPES, ROOM_TYPE_COLOR, ROOM_TYPE_LABEL, subjectColor } from '../theme';
+import { ACTIVITY_MARKER, ROOM_TYPES, ROOM_TYPE_COLOR, ROOM_TYPE_LABEL, subjectColor } from '../theme';
 import type { Swatch } from '../theme';
-import { periodTime, semesterWeeks, sessionsIn, slotId, slotLabel, weekdayName } from '../slots';
+import {
+  coursesIn,
+  offeringSessions,
+  offeringsIn,
+  periodTime,
+  semesterWeeks,
+  slotId,
+  slotLabel,
+  weekdayName,
+} from '../slots';
 import { semesterKey } from '../types';
 import type {
   Assignment,
@@ -34,8 +43,8 @@ interface Props {
   /** The semester on screen is one of `staleKeys`. */
   stale: boolean;
   onGenerate: () => void;
-  /** Move one session, by its index in `result.assignments`, to another slot. */
-  onMoveSession: (index: number, slot: string, date: string) => void;
+  /** Move one session, by its index in `result.assignments`, to another period. */
+  onMoveSession: (index: number, period: number, date: string) => void;
   onGoData: () => void;
   onGoGenerate: () => void;
 }
@@ -91,15 +100,28 @@ function SessionCard({
       onClick={onClick}
     >
       <div className="sesscard__top">
-        <span className="sesscard__subject">{a.subjectName}</span>
+        <span className="sesscard__subject">
+          {a.subjectCode} <span className="sesscard__marker">{ACTIVITY_MARKER[a.activity]}</span>
+        </span>
         {clash && <span className="sesscard__clashflag" title={clash.join(' ')} />}
         {a.softViolated && <span className="sesscard__flag" title={a.softReason ?? ''} />}
       </div>
       <div className="sesscard__teacher">{a.teacherName}</div>
-      <div className="sesscard__group">{a.groupNames.join(' · ')}</div>
+      <div className="sesscard__group">{a.subgroupName ?? a.groupNames.join(' · ')}</div>
       <div className="sesscard__room">{a.roomName}</div>
     </button>
   );
+}
+
+/** The групи in term this semester. A група belongs to exactly one курс and a
+ *  курс to one semester, so the same cohort appears once per семестър under the
+ *  same name -- and the group lens has to offer only the ones whose sessions
+ *  this grid could possibly show. Teachers and rooms are shared across
+ *  semesters and are not filtered. */
+function groupsOf(problem: Problem, ref: SemesterRef | null) {
+  if (!ref) return problem.groups;
+  const ids = new Set(coursesIn(problem.courseInstances, ref).map((c) => c.id));
+  return problem.groups.filter((g) => ids.has(g.courseInstanceId));
 }
 
 /** The three lenses filter one shared `assignments` array -- there is no
@@ -131,7 +153,9 @@ export function ResultScreen({
   // A faculty-sized timetable is unreadable with every group shown at once, so
   // large results open focused on a single group instead of "All".
   const [pick, setPick] = useState(() =>
-    (result?.assignments.length ?? 0) > 60 ? (problem.groups[0]?.id ?? 'all') : 'all',
+    (result?.assignments.length ?? 0) > 60
+      ? (groupsOf(problem, semester)[0]?.id ?? 'all')
+      : 'all',
   );
   const [colorBy, setColorBy] = useState<'subject' | 'roomType'>('subject');
   const [dense, setDense] = useState(false);
@@ -164,8 +188,9 @@ export function ResultScreen({
   }, [overflow]);
 
   const weeks = useMemo(
-    () => (semester ? semesterWeeks(problem.slotConfig, problem.groups, semester) : []),
-    [problem.slotConfig, problem.groups, semester],
+    () =>
+      semester ? semesterWeeks(problem.slotConfig, problem.courseInstances, semester) : [],
+    [problem.slotConfig, problem.courseInstances, semester],
   );
   const week = weeks[Math.min(weekIndex, Math.max(weeks.length - 1, 0))];
   const weekDates = week?.dates ?? [];
@@ -173,7 +198,8 @@ export function ResultScreen({
   const assignments = result?.assignments ?? [];
   const subjectIds = problem.subjects.map((s) => s.id);
   const blocked = new Set(problem.slotConfig.blockedSlots);
-  const roomTypeOf = (roomId: string) => problem.rooms.find((r) => r.id === roomId)?.type ?? 'lecture';
+  const roomTypeOf = (roomId: string) =>
+    problem.rooms.find((r) => r.id === roomId)?.type ?? 'зала';
 
   const visible = useMemo(
     () => assignments.filter((a) => matchesLens(a, lens, pick)),
@@ -204,34 +230,38 @@ export function ResultScreen({
 
   const pickOptions =
     lens === 'group'
-      ? problem.groups.map((g) => ({ id: g.id, label: g.name }))
+      ? groupsOf(problem, semester).map((g) => ({ id: g.id, label: g.name }))
       : lens === 'teacher'
         ? problem.teachers.map((t) => ({ id: t.id, label: t.name }))
         : problem.rooms.map((r) => ({ id: r.id, label: r.name }));
 
   const legend =
     colorBy === 'roomType'
-      ? ROOM_TYPES.map((t) => ({
+      ? ROOM_TYPES.filter((t) => problem.rooms.some((r) => r.type === t)).map((t) => ({
           label: ROOM_TYPE_LABEL[t],
           c: ROOM_TYPE_COLOR[t].c,
         }))
       : problem.subjects
           .filter((s) => visible.some((a) => a.subjectId === s.id))
-          .map((s) => ({ label: s.name, c: subjectColor(subjectIds, s.id).c }));
+          .map((s) => ({ label: `${s.code} — ${s.name}`, c: subjectColor(subjectIds, s.id).c }));
 
   const exportCsv = () => {
     const header =
-      'date,day,period,subject,teacher,groups,room,soft_preference_violated,room_choice_rank';
+      'date,day,period,code,subject,activity,teacher,groups,subgroup,room,' +
+      'soft_preference_violated,room_choice_rank';
     const rows = [...assignments]
       .sort((a, b) => a.slot.localeCompare(b.slot))
       .map((a) => {
         return [
           a.date,
           weekdayName(a.date),
-          a.slot.slice(a.date.length + 1),
+          a.period,
+          a.subjectCode,
           a.subjectName,
+          a.activity,
           a.teacherName,
           a.groupNames.join(' + '),
+          a.subgroupName ?? '',
           a.roomName,
           a.softViolated ? 'yes' : 'no',
           a.roomPreferenceRank == null ? '' : a.roomPreferenceRank + 1,
@@ -251,7 +281,10 @@ export function ResultScreen({
   // Sessions this semester actually has. Zero means there is nothing to solve --
   // the run would come back OPTIMAL over an empty grid, which reads as a bug.
   const semesterSessions = semester
-    ? problem.subjects.reduce((n, s) => n + sessionsIn(s, semester), 0)
+    ? offeringsIn(problem.offerings, problem.courseInstances, semester).reduce(
+        (n, o) => n + offeringSessions(o),
+        0,
+      )
     : 0;
 
   // The semester picker, shared by the empty state and the full toolbar: landing
@@ -279,6 +312,13 @@ export function ResultScreen({
           const next = semesters.find((x) => semesterKey(x) === key);
           if (next) {
             onPickSemester(next);
+            // The focused група belongs to the semester we are leaving, and its
+            // name repeats in the one we are entering -- so re-point it rather
+            // than leave the grid empty under a familiar label.
+            if (lens === 'group' && pick !== 'all') {
+              const mine = groupsOf(problem, next);
+              if (!mine.some((g) => g.id === pick)) setPick(mine[0]?.id ?? 'all');
+            }
             setWeekIndex(0);
             setSelected(null);
             setOverflow(null);
@@ -503,8 +543,8 @@ export function ResultScreen({
                 const id = `${date}-${period}`;
                 const cell = visible.filter((a) => a.slot === id);
                 const hidden = cell.slice(SHOWN_PER_CELL);
-                // blockedSlots stays weekday-keyed, so a blocked period is blocked
-                // on that weekday every week of the term.
+                // blockedSlots stays weekday-keyed, so a blocked period is
+                // blocked on that weekday every week of the term.
                 const isBlocked = blocked.has(slotId(weekdayName(date), period));
                 return (
                   <div
@@ -536,7 +576,7 @@ export function ResultScreen({
                       setDragging(null);
                       if (index === null) return;
                       const from = assignments[index];
-                      if (from && from.slot !== id) onMoveSession(index, id, date);
+                      if (from && from.slot !== id) onMoveSession(index, period, date);
                     }}
                   >
                     {cell.slice(0, SHOWN_PER_CELL).map((a) => {
@@ -612,10 +652,20 @@ export function ResultScreen({
                 </div>
                 <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 9 }}>
                   {[
+                    ['Activity', selectedAssignment.activity],
                     ['Teacher', selectedAssignment.teacherName],
-                    ['Groups', selectedAssignment.groupNames.join(', ')],
+                    [
+                      selectedAssignment.subgroupId ? 'Подгрупа' : 'Групи',
+                      selectedAssignment.subgroupName ?? selectedAssignment.groupNames.join(', '),
+                    ],
                     ['Room', selectedAssignment.roomName],
-                    ['Slot', slotLabel(problem.slotConfig, selectedAssignment.slot)],
+                    [
+                      'Period',
+                      slotLabel(
+                        problem.slotConfig,
+                        slotId(selectedAssignment.day, selectedAssignment.period),
+                      ),
+                    ],
                   ].map(([k, v]) => (
                     <div key={k} className="side__row">
                       <span className="side__k">{k}</span>
@@ -709,13 +759,20 @@ export function ResultScreen({
             <span className="eyebrow">Utilisation</span>
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { label: 'Slots used', used: new Set(assignments.map((a) => a.slot)).size, total: stats.numSlots },
+                {
+                  label: 'Periods used',
+                  used: new Set(assignments.map((a) => a.slot)).size,
+                  total: stats.numSlots,
+                },
                 ...ROOM_TYPES
                   .filter((t) => problem.rooms.some((r) => r.type === t))
                   .map((t) => ({
                     label: ROOM_TYPE_LABEL[t],
                     used: assignments.filter((a) => roomTypeOf(a.roomId) === t).length,
-                    total: problem.rooms.filter((r) => r.type === t).length * stats.numSlots,
+                    total:
+                      problem.rooms
+                        .filter((r) => r.type === t)
+                        .reduce((n, r) => n + r.maxConcurrentGroups, 0) * stats.numSlots,
                   })),
               ].map((u) => (
                 <div key={u.label}>

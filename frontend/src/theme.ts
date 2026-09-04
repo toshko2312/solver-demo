@@ -10,26 +10,45 @@ export interface Swatch {
   ink?: string;
 }
 
-export const ROOM_TYPES: RoomType[] = ['lecture', 'lab', 'sports', 'firing_range', 'training_ground'];
+export const ROOM_TYPES: RoomType[] = [
+  'зала',
+  'малка зала',
+  'компютърна зала',
+  'стрелбище',
+  'полигон',
+  'спортен комплекс',
+  'тренажорна зала',
+];
 
+/** The type *is* its Bulgarian name, so the label is the value. Kept as a map
+ *  because every table and legend reads through it, and an English gloss would
+ *  have to go somewhere if one were ever wanted. */
 export const ROOM_TYPE_LABEL: Record<RoomType, string> = {
-  lecture: 'Lecture hall',
-  lab: 'Computer lab',
-  sports: 'Sports hall',
-  firing_range: 'Firing range',
-  training_ground: 'Training ground',
+  'зала': 'Зала',
+  'малка зала': 'Малка зала',
+  'компютърна зала': 'Компютърна зала',
+  'стрелбище': 'Стрелбище',
+  'полигон': 'Полигон',
+  'спортен комплекс': 'Спортен комплекс',
+  'тренажорна зала': 'Тренажорна зала',
 };
+
+/** Room types that take one група or подгрупа at a time. The solver enforces
+ *  Room.maxConcurrentGroups, whatever it is set to; this is what a new room of
+ *  that type starts at, and what the form warns about raising. */
+export const SINGLE_GROUP_ROOM_TYPES: RoomType[] = ['стрелбище', 'малка зала'];
 
 /** The ranks a blank project starts with. Must stay in step with DEFAULT_ROLES
  *  in solver/app/models.py -- the ids especially, which are what a request
  *  omitting `roles` falls back to on the solver side. */
 export const DEFAULT_ROLES: Role[] = [
-  { id: 'professor', name: 'проф. — Professor', short: 'проф.', weight: 6 },
-  { id: 'associate_professor', name: 'доц. — Assoc. Professor', short: 'доц.', weight: 5 },
-  { id: 'chief_assistant', name: 'гл. ас. — Chief Assistant', short: 'гл. ас.', weight: 4 },
+  { id: 'professor', name: 'проф. — Professor', short: 'проф.', weight: 7 },
+  { id: 'associate_professor', name: 'доц. — Assoc. Professor', short: 'доц.', weight: 6 },
+  { id: 'chief_assistant', name: 'гл. ас. — Chief Assistant', short: 'гл. ас.', weight: 5 },
+  { id: 'assistant', name: 'ас. — Assistant', short: 'ас.', weight: 4 },
   { id: 'senior_lecturer', name: 'ст. преп. — Senior Lecturer', short: 'ст. преп.', weight: 3 },
   { id: 'lecturer', name: 'преп. — Lecturer', short: 'преп.', weight: 2 },
-  { id: 'assistant', name: 'ас. — Assistant', short: 'ас.', weight: 1 },
+  { id: 'honorary_lecturer', name: 'хон. преп. — Honorary Lecturer', short: 'хон. преп.', weight: 1 },
 ];
 
 /** Mirrors UNRANKED_WEIGHT: a teacher with no stated rank shares the bottom tier. */
@@ -49,11 +68,20 @@ export function effectiveWeight(
 }
 
 export const ROOM_TYPE_COLOR: Record<RoomType, Swatch> = {
-  lecture: { c: '#0066cc', tint: '#e9f1fb', ink: '#0a4f9e' },
-  lab: { c: '#0f7b6c', tint: '#e6f3f1', ink: '#0b5c51' },
-  sports: { c: '#1f7a3d', tint: '#e8f4ec', ink: '#175c2e' },
-  firing_range: { c: '#9a2c2c', tint: '#f9ecec', ink: '#7d1f1f' },
-  training_ground: { c: '#7a5c1f', tint: '#f5efe2', ink: '#5f4715' },
+  'зала': { c: '#0066cc', tint: '#e9f1fb', ink: '#0a4f9e' },
+  'малка зала': { c: '#3a5da8', tint: '#eaeff9', ink: '#2b4780' },
+  'компютърна зала': { c: '#0f7b6c', tint: '#e6f3f1', ink: '#0b5c51' },
+  'стрелбище': { c: '#9a2c2c', tint: '#f9ecec', ink: '#7d1f1f' },
+  'полигон': { c: '#7a5c1f', tint: '#f5efe2', ink: '#5f4715' },
+  'спортен комплекс': { c: '#1f7a3d', tint: '#e8f4ec', ink: '#175c2e' },
+  'тренажорна зала': { c: '#6b7f1c', tint: '#f1f4e3', ink: '#4f5f15' },
+};
+
+/** Лекция / упражнение / практика, for the grid marker and the session card. */
+export const ACTIVITY_MARKER: Record<string, string> = {
+  'лекция': 'л',
+  'упражнение': 'у',
+  'практика': 'п',
 };
 
 // Sixteen hues: a faculty timetable runs to dozens of subjects, and eight

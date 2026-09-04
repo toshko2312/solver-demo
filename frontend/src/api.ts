@@ -2,6 +2,7 @@ import { semesterSlots } from './slots';
 import { defaultSettings } from './settings';
 import type {
   Problem,
+  Razpisanie,
   SemesterRef,
   SolveProgress,
   SolveResponse,
@@ -17,17 +18,81 @@ function requestBody(
   semester: SemesterRef,
   settings: SolverSettings,
 ): string {
+  const { slotConfig } = problem;
   return JSON.stringify({
     semester,
-    // The weekday template expanded across this semester's real dates.
-    slots: semesterSlots(problem.slotConfig, problem.groups, semester),
+    // The weekday template expanded across this semester's real dates. The
+    // config itself never travels -- the solver is handed the dated periods and
+    // nothing else about the grid.
+    slots: semesterSlots(slotConfig, problem.courseInstances, semester),
     roles: problem.roles,
+    faculties: problem.faculties,
+    katedri: problem.katedri,
+    specialties: problem.specialties,
+    courseInstances: problem.courseInstances,
     teachers: problem.teachers,
     rooms: problem.rooms,
     groups: problem.groups,
+    subgroups: problem.subgroups,
     subjects: problem.subjects,
+    offerings: problem.offerings,
     ...settings,
   });
+}
+
+/** The printed разписание for one курс, rendered server-side.
+ *
+ *  Takes the problem and the answer rather than re-solving: the document is a
+ *  view of a result that already exists, and re-solving could quietly produce a
+ *  different timetable from the one on screen.
+ */
+async function razpisanieRequest(
+  problem: Problem,
+  semester: SemesterRef,
+  result: SolveResponse,
+  courseInstanceId: string,
+  format: 'html' | 'json',
+): Promise<Response> {
+  const { slotConfig } = problem;
+  const periodTimes: Record<number, string> = {};
+  slotConfig.periodTimes.forEach((t, i) => {
+    periodTimes[i + 1] = t;
+  });
+  const response = await fetch(`${BASE}/razpisanie?format=${format}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      request: JSON.parse(requestBody(problem, semester, defaultSettings())),
+      response: result,
+      courseInstanceId,
+      periodTimes,
+    }),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Solver returned ${response.status}: ${body.slice(0, 400)}`);
+  }
+  return response;
+}
+
+export async function razpisanieHtml(
+  problem: Problem,
+  semester: SemesterRef,
+  result: SolveResponse,
+  courseInstanceId: string,
+): Promise<string> {
+  const response = await razpisanieRequest(problem, semester, result, courseInstanceId, 'html');
+  return await response.text();
+}
+
+export async function razpisanieDocument(
+  problem: Problem,
+  semester: SemesterRef,
+  result: SolveResponse,
+  courseInstanceId: string,
+): Promise<Razpisanie> {
+  const response = await razpisanieRequest(problem, semester, result, courseInstanceId, 'json');
+  return (await response.json()) as Razpisanie;
 }
 
 export async function solve(

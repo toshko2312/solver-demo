@@ -4,11 +4,12 @@
 import asyncio
 import json
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 
-from .models import SolveRequest, SolveResponse
+from .models import Razpisanie, RazpisanieRequest, SolveRequest, SolveResponse
+from .razpisanie import build_razpisanie, render_html
 from .timetable_solver import solve_timetable
 
 app = FastAPI(
@@ -88,3 +89,30 @@ async def solve_stream(request: SolveRequest) -> StreamingResponse:
         # Proxies that buffer would defeat the whole point of streaming.
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.post("/razpisanie")
+def razpisanie(body: RazpisanieRequest, format: str = "html"):
+    """The printed разписание for one курс, out of a problem and its answer.
+
+    `format=json` returns the document model; anything else returns print-ready
+    HTML (A4 landscape) for the browser to print to PDF. The solve itself is
+    untouched -- this is a renderer over a `SolveResponse` that already exists,
+    which is why it takes both halves rather than re-solving.
+    """
+    try:
+        doc = build_razpisanie(
+            body.request, body.response, body.courseInstanceId, body.periodTimes
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if format == "json":
+        return doc
+    return HTMLResponse(render_html(doc))
+
+
+@app.get("/razpisanie/model", response_model=Razpisanie, include_in_schema=False)
+def razpisanie_model() -> Razpisanie:  # pragma: no cover - schema anchor only
+    """Present so the generated OpenAPI schema carries the Razpisanie model even
+    though /razpisanie returns raw HTML by default."""
+    raise HTTPException(status_code=404, detail="Not a real endpoint.")

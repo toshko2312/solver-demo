@@ -1,11 +1,12 @@
 import { SlotPicker } from '../SlotPicker';
 import { effectiveWeight } from '../../theme';
-import type { Role, Room, SlotConfig, Teacher } from '../../types';
+import type { Katedra, Role, Room, SlotConfig, Teacher } from '../../types';
 
 interface Props {
   teachers: Teacher[];
   roles: Role[];
   rooms: Room[];
+  katedri: Katedra[];
   slotConfig: SlotConfig;
   totalSlots: number;
   onTogglePreference: (teacherId: string, slotId: string) => void;
@@ -17,6 +18,7 @@ export function TeachersTable({
   teachers,
   roles,
   rooms,
+  katedri,
   slotConfig,
   totalSlots,
   onTogglePreference,
@@ -29,12 +31,15 @@ export function TeachersTable({
         <thead>
           <tr>
             <th>Teacher</th>
-            <th>Department</th>
+            <th>Катедра</th>
             <th>
               Rank <span className="field__soft">priority</span>
             </th>
             <th>
-              Preferred slots <span className="field__soft">soft</span>
+              Preferred periods <span className="field__soft">soft</span>
+            </th>
+            <th>
+              Availability <span className="field__soft">HARD</span>
             </th>
             <th>
               Preferred rooms <span className="field__soft">soft, ranked</span>
@@ -45,7 +50,7 @@ export function TeachersTable({
         <tbody>
           {teachers.length === 0 && (
             <tr>
-              <td colSpan={6} className="empty-row">
+              <td colSpan={7} className="empty-row">
                 No teachers yet.
               </td>
             </tr>
@@ -53,7 +58,7 @@ export function TeachersTable({
           {teachers.map((t) => (
             <tr key={t.id}>
               <td className="name">{t.name}</td>
-              <td>{t.department ?? '—'}</td>
+              <td>{katedri.find((k) => k.id === t.katedraId)?.name ?? '—'}</td>
               <td>
                 {roles.find((r) => r.id === t.role)?.short ?? (
                   <span className="muted-sm">unranked</span>
@@ -74,6 +79,24 @@ export function TeachersTable({
                     {t.preferredSlots.length} of {totalSlots} preferred
                   </span>
                 </div>
+              </td>
+              <td>
+                {t.hardAvailability.length === 0 ? (
+                  <span className="muted-sm">always</span>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <SlotPicker
+                      config={slotConfig}
+                      selected={t.hardAvailability}
+                      intent="hard"
+                      onToggle={() => undefined}
+                    />
+                    <span className="muted-sm">
+                      {t.hardAvailability.length} period(s)
+                      {t.maxWeeklyPeriods != null ? `, max ${t.maxWeeklyPeriods}/week` : ''}
+                    </span>
+                  </div>
+                )}
               </td>
               <td>
                 {t.preferredRooms.length === 0 ? (

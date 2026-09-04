@@ -1,8 +1,17 @@
 import type { SolverSettings } from './types';
 
-/** Mirrors DEFAULT_SOLVE_SECONDS in solver/app/models.py. The full seed is a hard
- *  instance that would otherwise run to the ceiling every time. */
-export const DEFAULT_SOLVE_SECONDS = 30;
+/** Mirrors DEFAULT_SOLVE_SECONDS in solver/app/models.py: no deadline at all.
+ *
+ *  A faculty-sized semester takes about ninety seconds just to find its first
+ *  legal timetable, so any budget short enough to feel like a demo comes back
+ *  UNKNOWN with nothing placed — a worse answer than a slow one. An unlimited
+ *  run always returns the best timetable it found. The cost is that the request
+ *  stays open for the whole run; set a limit in Settings when that matters. */
+export const DEFAULT_SOLVE_SECONDS: number | null = null;
+
+/** Mirrors DEMO_SOLVE_SECONDS: the "quick look" preset, and what the small
+ *  example finishes comfortably inside. */
+export const DEMO_SOLVE_SECONDS = 30;
 
 /** Must match the field defaults in solver/app/models.py. */
 export function defaultSettings(): SolverSettings {
